@@ -1,0 +1,32 @@
+C:\Users\samue\OneDrive\┴rea de Trabalho\blueocean\deteccao_relampagos\lightning_tracker\src\web_render.py:344: FutureWarning: The behavior of DatetimeProperties.to_pydatetime is deprecated, in a future version this will return a Series containing python datetime objects instead of an ndarray. To retain the old behavior, call `np.array` on the result
+  t_num = matplotlib.dates.date2num(t_local.dt.to_pydatetime())
+X-Last-Update-Local: 00:10:00
+X-Plot-Start-Local: 2026-05-04 00:08:00
+X-Plot-End-Local: 2026-05-04 00:10:00
+X-Flashes-Count: 1
+X-Events-Count: 19
+X-Mode: 1
+X-Dynamic-Start: 0
+X-Dynamic-End: 0
+X-Initial-Load-Hours: 0
+X-Background: 1
+X-Background-Settings-Enabled: 0
+X-Background-Applied: 1
+X-Background-Reason: ok
+X-Background-NetCDF-Path-Kind: relative
+X-Background-NetCDF-Path: data\raw\abi_ir\2026\124\03\OR_ABI-L2-CMIPF-M6C13_G19_s20261240300208_e20261240309528_c20261240309567.nc
+X-Background-Dt-UTC: 2026-05-04T03:10:00+00:00
+X-Background-Extent: -40.947,-36.794,-5.765,-1.620
+X-Background-S3-Bucket: noaa-goes19
+X-Background-S3-Product: ABI-L2-CMIPF
+X-Background-S3-Channel: 13
+X-Background-S3-Prefix0: ABI-L2-CMIPF/2026/124/03/
+X-Background-S3-Prefix1: ABI-L2-CMIPF/2026/124/02/
+X-Background-S3-Key: ABI-L2-CMIPF/2026/124/03/OR_ABI-L2-CMIPF-M6C13_G19_s20261240300208_e20261240309528_c20261240309567.nc
+X-Background-File-Time-UTC: 2026-05-04T03:00:20+00:00
+X-Background-File: OR_ABI-L2-CMIPF-M6C13_G19_s20261240300208_e20261240309528_c20261240309567.nc
+X-Background-Cache: miss
+X-Background-Subset-Origin: upper
+X-Background-Subset-Shape: 222x174
+X-Background-Subset-Step: 1
+X-Background-Subset-Finite: 38628

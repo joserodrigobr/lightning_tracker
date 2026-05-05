@@ -1,0 +1,21 @@
+:root {
+  --brand-blue: #0b77c1;
+  --control-bg: #b8d9f2;
+
+  font-family: system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.35;
+  color: #111;
+  background: #fff;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}

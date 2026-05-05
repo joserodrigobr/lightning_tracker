@@ -1,0 +1,15 @@
+C:\Users\samue\OneDrive\┴rea de Trabalho\blueocean\deteccao_relampagos\lightning_tracker\src\web_render.py:344: FutureWarning: The behavior of DatetimeProperties.to_pydatetime is deprecated, in a future version this will return a Series containing python datetime objects instead of an ndarray. To retain the old behavior, call `np.array` on the result
+  t_num = matplotlib.dates.date2num(t_local.dt.to_pydatetime())
+X-Last-Update-Local: 00:10:00
+X-Plot-Start-Local: 2026-05-04 00:08:00
+X-Plot-End-Local: 2026-05-04 00:10:00
+X-Flashes-Count: 1
+X-Events-Count: 19
+X-Mode: 1
+X-Dynamic-Start: 0
+X-Dynamic-End: 0
+X-Initial-Load-Hours: 0
+X-Background: 0
+X-Background-Settings-Enabled: 0
+X-Background-Applied: 0
+X-Background-Reason: not_requested

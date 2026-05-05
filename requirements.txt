@@ -1,0 +1,13 @@
+boto3>=1.35
+botocore>=1.35
+PyYAML>=6.0
+numpy>=1.24
+pandas>=2.0
+matplotlib>=3.8
+netCDF4>=1.6
+
+# Optional (satellite background overlay).
+pyproj>=3.6
+
+# Optional (density plots). The code runs without these if missing.
+scipy>=1.10

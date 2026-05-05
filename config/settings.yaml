@@ -1,0 +1,59 @@
+app:
+  update_interval_sec: 300
+  history_hours: 24
+  # Carga inicial na inicialização:
+  # 0 = padrão (~5 min); N = busca últimas N horas (limitado até 00:00 local se cap_midnight=true)
+  initial_load_hours: 0
+  initial_load_cap_midnight: true
+
+data:
+  raw_dir: data/raw/glm_20s_goes
+  processed_dir: data/processed
+  # If true, attempts to download GOES-19 GLM files from AWS public S3.
+  enable_download: true
+
+aws:
+  bucket: noaa-goes19
+  product_prefix: GLM-L2-LCFA
+  interval_seconds: 20
+  # The product is usually published with a small delay.
+  availability_lag_sec: 180
+
+service_takers:
+  csv_path: config/service_takers.csv
+
+geo:
+  radii_km: [30, 50, 100, 200]
+
+plot:
+  max_points: 30000
+  dpi: 120
+  show_polygon: true
+  # Para o polígono por eventos (em modos 1/2), mantém apenas eventos recentes (evita explodir memória).
+  polygon_events_window_minutes: 15
+  # Matplotlib backend: auto | TkAgg | Agg
+  backend: auto
+
+# Optional: GOES-19 ABI IR background overlay (channel 13)
+background:
+  enabled: true
+  bucket: noaa-goes19
+  product_prefix: ABI-L2-CMIPF
+  channel: 13
+  cache_dir: data/raw/abi_ir
+  alpha: 0.45
+  cmap: cinza_jet
+  vmin_k: 190
+  vmax_k: 310
+  max_dim: 600
+
+archive:
+  enabled: true
+  # Saves once per hour (first cycle in a new hour)
+  save_on_hour_change: true
+  screenshots_dir: output/screenshots
+  tables_dir: output/tables
+
+notifications:
+  enabled: true
+  beep: true

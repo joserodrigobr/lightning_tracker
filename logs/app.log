@@ -1,0 +1,13 @@
+2026-05-04 14:53:07,476 INFO Inicializando visualizador
+2026-05-04 14:53:07,673 INFO Rodando loop operacional (300s)
+2026-05-04 14:53:08,667 INFO Baixados: 0 | Não encontrados: 17
+2026-05-04 15:17:49,595 INFO Inicializando visualizador
+2026-05-04 15:17:50,004 INFO Rodando loop operacional (300s)
+2026-05-04 15:17:55,265 INFO Baixados: 17 | Não encontrados: 0
+2026-05-04 15:31:25,903 INFO Inicializando visualizador
+2026-05-04 15:31:26,244 INFO Carga inicial: 13h (cap_00h=True) | Janela: 2026-05-04 05:28:26 -> 2026-05-04 18:28:26 UTC | ~2341 arquivos
+2026-05-04 15:31:26,245 INFO Rodando loop operacional (300s)
+2026-05-04 15:32:22,223 INFO Inicializando visualizador
+2026-05-04 15:32:22,539 INFO Rodando loop operacional (300s)
+2026-05-04 15:32:27,754 INFO Baixados: 17 | Não encontrados: 0
+2026-05-04 15:37:25,069 INFO Baixados: 8 | Não encontrados: 9

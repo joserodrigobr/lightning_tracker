@@ -1,0 +1,25 @@
+X-Last-Update-Local: 22:26:00
+X-Plot-Start-Local: 2026-05-04 22:26:00
+X-Plot-End-Local: 2026-05-04 22:26:00
+X-Flashes-Count: 0
+X-Events-Count: 0
+X-Mode: 1
+X-Dynamic-Start: 0
+X-Dynamic-End: 0
+X-Initial-Load-Hours: 0
+X-Background: 1
+X-Background-Settings-Enabled: 0
+X-Background-Applied: 0
+X-Background-Reason: netcdf_read_failed
+X-Background-Detail: FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\samue\\OneDrive\\┴rea de Trabalho\\blueocean\\deteccao_relampagos\\lightning_tracker\\data\\raw\\abi_ir\\2026\\125\\01\\OR_ABI-L2-CMIPF-M6C13_G19_s20261250110209_e20261250119529_c20261250119578.nc'
+X-Background-Dt-UTC: 2026-05-05T01:23:42.121669+00:00
+X-Background-Extent: -40.438,-36.191,-14.739,-10.595
+X-Background-S3-Bucket: noaa-goes19
+X-Background-S3-Product: ABI-L2-CMIPF
+X-Background-S3-Channel: 13
+X-Background-S3-Prefix0: ABI-L2-CMIPF/2026/125/01/
+X-Background-S3-Prefix1: ABI-L2-CMIPF/2026/125/00/
+X-Background-S3-Key: ABI-L2-CMIPF/2026/125/01/OR_ABI-L2-CMIPF-M6C13_G19_s20261250110209_e20261250119529_c20261250119578.nc
+X-Background-File-Time-UTC: 2026-05-05T01:10:20+00:00
+X-Background-File: OR_ABI-L2-CMIPF-M6C13_G19_s20261250110209_e20261250119529_c20261250119578.nc
+X-Background-Cache: miss

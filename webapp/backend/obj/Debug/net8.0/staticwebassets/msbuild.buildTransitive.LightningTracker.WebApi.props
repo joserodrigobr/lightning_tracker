@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\buildMultiTargeting\LightningTracker.WebApi.props" />
+</Project>

@@ -1,0 +1,424 @@
+.app {
+  min-height: 100vh;
+}
+
+.topbar {
+  height: 44px;
+  background: var(--brand-blue);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.topbarTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 20px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(760px, 1fr) 420px;
+  gap: 22px;
+  padding: 18px;
+  max-width: 1480px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.plotPane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.plotHeaderText {
+  text-align: left;
+  color: #222;
+  font-size: 16px;
+}
+
+.plotFrame {
+  position: relative;
+  border: 2px solid #111;
+  background: #fff;
+  min-height: 760px;
+}
+
+.plotImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.plotPlaceholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #444;
+  font-size: 16px;
+  padding: 24px;
+  box-sizing: border-box;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(245, 248, 252, 0.95), rgba(255, 255, 255, 0.9));
+}
+
+.plotPlaceholderLoading {
+  animation: pulsePlaceholder 1.4s ease-in-out infinite;
+}
+
+.plotPlaceholderCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 360px;
+  padding: 18px 22px;
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.plotPlaceholderCard strong {
+  font-size: 20px;
+  color: #0f172a;
+}
+
+.plotPlaceholderCard span {
+  font-size: 14px;
+  color: #475569;
+}
+
+.plotOverlay {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 2;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.82);
+  color: #fff;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+}
+
+.plotSummary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  background: #fff;
+}
+
+.summaryLabel {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+}
+
+.summaryItem strong {
+  font-size: 15px;
+  color: #111827;
+}
+
+@keyframes pulsePlaceholder {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.78;
+  }
+}
+
+.watermark {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  width: 105px;
+  height: auto;
+  opacity: 0.95;
+  pointer-events: none;
+}
+
+.controlsPane {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.brand {
+  display: flex;
+  justify-content: center;
+  padding-top: 30px;
+}
+
+.brandLogo {
+  width: 320px;
+  max-width: 100%;
+  height: auto;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.rowTight {
+  grid-template-columns: 1fr;
+}
+
+.row label {
+  font-size: 18px;
+  color: #222;
+  text-align: left;
+}
+
+.field {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 18px;
+  background: var(--control-bg);
+  border: 2px solid #111;
+  box-sizing: border-box;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  color: #222;
+}
+
+.checkbox input {
+  width: 18px;
+  height: 18px;
+}
+
+.status {
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  background: #fff;
+  text-align: left;
+  color: #cc0000;
+  font-size: 14px;
+}
+
+.statusInfo {
+  color: #0f172a;
+  border-color: rgba(17, 17, 17, 0.12);
+  background: #f8fafc;
+}
+
+.tableActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tableBtn,
+.savedTablesRefresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 2px solid #111;
+  background: #111;
+  color: #fff;
+  font-size: 16px;
+  padding: 11px 14px;
+  cursor: pointer;
+}
+
+.tableBtnSecondary,
+.savedTablesRefresh {
+  background: #fff;
+  color: #111;
+}
+
+.tableBtn:disabled,
+.savedTablesRefresh:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.tablePanel,
+.savedTablesPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  background: #fff;
+  padding: 14px;
+}
+
+.tablePanelHeader,
+.savedTablesHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tablePanelHeader strong,
+.savedTablesHeader strong {
+  display: block;
+  font-size: 18px;
+  color: #111827;
+}
+
+.tablePanelHeader span,
+.savedTablesHeader span,
+.tablePanelMeta {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.tableScroll {
+  overflow: auto;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+}
+
+.tableGrid {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 920px;
+  font-size: 12px;
+}
+
+.tableGrid th,
+.tableGrid td {
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  padding: 6px 8px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tableGrid thead th {
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  color: #111827;
+  z-index: 1;
+}
+
+.tableGrid tbody th {
+  position: sticky;
+  left: 0;
+  background: #f8fafc;
+  z-index: 1;
+  text-align: left;
+}
+
+.tableCorner {
+  left: 0;
+  z-index: 2 !important;
+}
+
+.tableEmpty {
+  padding: 12px;
+  border: 1px dashed rgba(17, 17, 17, 0.18);
+  background: #fafafa;
+  color: #475569;
+  font-size: 14px;
+}
+
+.tableEmpty.small {
+  font-size: 13px;
+}
+
+.savedTablesList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.savedTableItem {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  background: #fff;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.savedTableItemActive {
+  border-color: #111;
+  box-shadow: 0 0 0 1px #111 inset;
+}
+
+.savedTableItemTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.savedTableItemPath {
+  font-size: 12px;
+  color: #6b7280;
+  word-break: break-all;
+}
+
+.downloadRow {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 10px;
+}
+
+.downloadBtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: none;
+  background: transparent;
+  color: #111;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 10px 0;
+}
+
+.downloadBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.downloadIcon {
+  width: 30px;
+  height: 30px;
+}
