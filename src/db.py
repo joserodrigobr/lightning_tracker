@@ -147,3 +147,22 @@ def insert_events(conn, events: Iterable[Dict[str, Any]], raw_file_id: Optional[
         cur.close()
     conn.commit()
     return len(rows)
+
+
+def delete_raw_files_older_than(conn, cutoff_utc) -> int:
+    """Delete raw file blobs older than the provided UTC cutoff."""
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            delete from raw_files
+            where source_time is not null
+              and source_time < %s
+            """,
+            (cutoff_utc,)
+        )
+        deleted = cur.rowcount or 0
+    finally:
+        cur.close()
+    conn.commit()
+    return deleted

@@ -101,10 +101,23 @@ class AbiIrBackgroundProvider:
         self._cache_token: tuple[object, ...] | None = None
         self._cache_image: BackgroundImage | None = None
 
+        self._cleanup_manager: object | None = None
+
     def _prefix_for_hour(self, dt_utc: datetime) -> str:
         dt_utc = _utc(dt_utc)
         doy = _day_of_year(dt_utc)
         return f"{self.product_prefix}/{dt_utc.year}/{doy:03d}/{dt_utc.hour:02d}/"
+
+    def cleanup_cache(self, older_than_days: int = 3) -> int:
+        """Delete .nc files from cache older than N days.
+
+        Returns:
+            Number of files deleted
+        """
+        if self._cleanup_manager is None:
+            from .cleanup import FileCleanupManager
+            self._cleanup_manager = FileCleanupManager()
+        return self._cleanup_manager.cleanup_background_cache(self.cache_dir, older_than_days)
 
     def _stamp_to_dt(self, stamp14: str) -> datetime:
         # Stamp is: YYYYJJJHHMMSSs (s = tenths)
@@ -151,7 +164,7 @@ class AbiIrBackgroundProvider:
         dt_utc = _utc(dt_utc)
 
         # Try current hour then previous hour (handles boundary + publish delay).
-        for candidate_dt in (dt_utc, dt_utc - timedelta(hours=1)):
+        for attempt, candidate_dt in enumerate((dt_utc, dt_utc - timedelta(hours=1))):
             prefix = self._prefix_for_hour(candidate_dt)
             self._ensure_hour_index(prefix)
             items = self._hour_index.get(prefix, [])
@@ -182,9 +195,19 @@ class AbiIrBackgroundProvider:
         filename = key.split("/")[-1]
         dest_path = dest_dir / filename
         if dest_path.exists() and dest_path.stat().st_size > 0:
+            print(f"[BG] Cache hit: {dest_path} ({dest_path.stat().st_size} bytes)", flush=True)
             return dest_path
 
+        print(f"[BG] Downloading S3 key: {key}", flush=True)
+        print(f"[BG] Destination: {dest_path}", flush=True)
         self.s3.download_file(self.bucket, key, str(dest_path))
+        
+        if dest_path.exists():
+            size = dest_path.stat().st_size
+            print(f"[BG] Download complete: {size} bytes", flush=True)
+        else:
+            print(f"[BG] ERROR: File not found after download: {dest_path}", flush=True)
+        
         return dest_path
 
     def _subset_cmi(
@@ -217,20 +240,39 @@ class AbiIrBackgroundProvider:
             # Windows: netCDF4 may fail to open absolute paths containing non-ASCII characters.
             # If the cache file lives under the current working directory, prefer an ASCII relative path.
             open_path = file_path
+            
+            print(f"[BG] File exists check: {file_path.exists()}", flush=True)
+            if file_path.exists():
+                print(f"[BG] File size: {file_path.stat().st_size} bytes", flush=True)
+            
+            print(f"[BG] file_path is absolute: {file_path.is_absolute()}", flush=True)
+            print(f"[BG] file_path raw: {file_path}", flush=True)
+            print(f"[BG] file_path resolved: {file_path.resolve()}", flush=True)
+            
             try:
                 cwd = Path.cwd().resolve()
+                print(f"[BG] Attempting relative_to conversion...", flush=True)
                 rel = file_path.resolve().relative_to(cwd)
                 rel_s = str(rel)
+                print(f"[BG] Relative path succeeded: {rel_s}", flush=True)
+                print(f"[BG] Is relative ASCII: {rel_s.isascii()}", flush=True)
                 if rel_s and rel_s.isascii():
                     open_path = rel
                     _diag_set(diag, "netcdf_open_path_kind", "relative")
                     _diag_set(diag, "netcdf_open_path", rel_s)
-            except Exception:
+                    print(f"[BG] Using relative path for NetCDF: {rel_s}", flush=True)
+                else:
+                    print(f"[BG] Relative path is not ASCII, using absolute", flush=True)
+            except Exception as e:
+                print(f"[BG] Could not use relative path: {type(e).__name__}: {e}", flush=True)
                 pass
             if open_path is file_path:
                 _diag_set(diag, "netcdf_open_path_kind", "absolute")
+                print(f"[BG] Using absolute path for NetCDF: {open_path}", flush=True)
 
+            print(f"[BG] Attempting to open NetCDF with: {str(open_path)}", flush=True)
             with Dataset(str(open_path), mode="r") as ds:
+                print(f"[BG] NetCDF opened successfully", flush=True)
                 missing = [v for v in ("CMI", "x", "y") if v not in ds.variables]
                 if missing:
                     _diag_set(diag, "reason", "netcdf_missing_vars", overwrite=False)
@@ -310,6 +352,8 @@ class AbiIrBackgroundProvider:
                 _diag_set(diag, "subset_finite", int(np.isfinite(cmi).sum()))
                 return cmi, origin
         except Exception as e:
+            print(f"[BG] NetCDF read error: {type(e).__name__}: {e}", flush=True)
+            print(f"[BG] Error trace: {type(e).__module__}.{type(e).__qualname__}", flush=True)
             _diag_set(diag, "reason", "netcdf_read_failed", overwrite=False)
             _diag_set(diag, "detail", f"{type(e).__name__}: {e}", overwrite=False)
             return None
@@ -325,6 +369,9 @@ class AbiIrBackgroundProvider:
 
         extent: (lon_min, lon_max, lat_min, lat_max)
         """
+
+        print(f"[BG] get_background called, cwd={Path.cwd()}", flush=True)
+        print(f"[BG] cache_dir={self.cache_dir}, absolute={self.cache_dir.resolve()}", flush=True)
 
         lon_min, lon_max, lat_min, lat_max = extent
 
@@ -369,11 +416,13 @@ class AbiIrBackgroundProvider:
         try:
             path = self._download_key(key)
         except Exception as e:
+            print(f"[BG] Download failed: {type(e).__name__}: {e}", flush=True)
             _diag_set(diag, "reason", "download_failed", overwrite=False)
             _diag_set(diag, "detail", f"{type(e).__name__}: {e}", overwrite=False)
             return None
 
         _diag_set(diag, "local_file", path.name)
+        print(f"[BG] Starting subset_cmi for: {path}", flush=True)
 
         subset = self._subset_cmi(
             path,

@@ -11,12 +11,12 @@ public sealed class PythonActivityService
     private readonly string _sqlitePath;
     private readonly string _contentRoot;
 
-    public PythonActivityService(IConfiguration config, IHostEnvironment env)
+    public PythonActivityService(ConfigurationService config, IHostEnvironment env)
     {
-        _pythonCommand = config["Python:Command"] ?? "python";
-        _workingDirectory = config["Python:WorkingDirectory"] ?? "..\\..";
-        _settingsPath = config["Python:SettingsPath"] ?? "config\\settings.yaml";
-        _sqlitePath = config["Data:ServiceTakersDbPath"] ?? "db/service_takers.sqlite";
+        _pythonCommand = config.GetPythonCommand();
+        _workingDirectory = config.GetPythonWorkingDirectory();
+        _settingsPath = Path.Combine(config.GetPythonWorkingDirectory(), "config", "settings.yaml");
+        _sqlitePath = config.GetServiceTakersDbPath();
         _contentRoot = env.ContentRootPath;
     }
 

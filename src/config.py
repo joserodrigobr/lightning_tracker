@@ -31,6 +31,7 @@ class Settings:
     plot_max_points: int
     plot_dpi: int
     plot_show_polygon: bool
+    plot_show_admin_shapes: bool
     plot_polygon_events_window_minutes: int
     plot_backend: str
 
@@ -44,6 +45,7 @@ class Settings:
     background_bucket: str
     background_product_prefix: str
     background_channel: int
+    background_fetch_timeout_seconds: int
 
     archive_enabled: bool
     archive_save_on_hour_change: bool
@@ -52,6 +54,14 @@ class Settings:
 
     notifications_enabled: bool
     notifications_beep: bool
+
+    cleanup_enabled: bool
+    cleanup_days_old: int
+    fetch_initial_hours: int
+    fetch_overlap_seconds: int
+    fetch_timeout_seconds: int
+    fetch_state_file: Path
+    enable_fetch_tracker: bool
 
 
 def _deep_get(d: dict[str, Any], path: list[str], default: Any) -> Any:
@@ -95,6 +105,7 @@ def load_settings(settings_path: Path) -> Settings:
     plot_max_points = int(_deep_get(raw_cfg, ["plot", "max_points"], 30000))
     plot_dpi = int(_deep_get(raw_cfg, ["plot", "dpi"], 120))
     plot_show_polygon = bool(_deep_get(raw_cfg, ["plot", "show_polygon"], True))
+    plot_show_admin_shapes = bool(_deep_get(raw_cfg, ["plot", "show_admin_shapes"], False))
     plot_polygon_events_window_minutes = int(_deep_get(raw_cfg, ["plot", "polygon_events_window_minutes"], 15))
     plot_backend = str(_deep_get(raw_cfg, ["plot", "backend"], "auto"))
 
@@ -108,6 +119,7 @@ def load_settings(settings_path: Path) -> Settings:
     background_bucket = str(_deep_get(raw_cfg, ["background", "bucket"], aws_bucket))
     background_product_prefix = str(_deep_get(raw_cfg, ["background", "product_prefix"], "ABI-L2-CMIPF"))
     background_channel = int(_deep_get(raw_cfg, ["background", "channel"], 13))
+    background_fetch_timeout_seconds = int(_deep_get(raw_cfg, ["background", "fetch_timeout_seconds"], 15))
 
     archive_enabled = bool(_deep_get(raw_cfg, ["archive", "enabled"], True))
     archive_save_on_hour_change = bool(_deep_get(raw_cfg, ["archive", "save_on_hour_change"], True))
@@ -118,6 +130,14 @@ def load_settings(settings_path: Path) -> Settings:
 
     notifications_enabled = bool(_deep_get(raw_cfg, ["notifications", "enabled"], True))
     notifications_beep = bool(_deep_get(raw_cfg, ["notifications", "beep"], True))
+
+    cleanup_enabled = bool(_deep_get(raw_cfg, ["data", "cleanup_enabled"], True))
+    cleanup_days_old = int(_deep_get(raw_cfg, ["data", "cleanup_days_old"], 3))
+    fetch_initial_hours = int(_deep_get(raw_cfg, ["data", "fetch_initial_hours"], 3))
+    fetch_overlap_seconds = int(_deep_get(raw_cfg, ["data", "fetch_overlap_seconds"], 10))
+    fetch_timeout_seconds = int(_deep_get(raw_cfg, ["data", "fetch_timeout_seconds"], 15))
+    fetch_state_file = root_dir / str(_deep_get(raw_cfg, ["data", "fetch_state_file"], "data/.fetch_state.json"))
+    enable_fetch_tracker = bool(_deep_get(raw_cfg, ["data", "enable_fetch_tracker"], True))
 
     return Settings(
         root_dir=root_dir,
@@ -137,6 +157,7 @@ def load_settings(settings_path: Path) -> Settings:
         plot_max_points=plot_max_points,
         plot_dpi=plot_dpi,
         plot_show_polygon=plot_show_polygon,
+        plot_show_admin_shapes=plot_show_admin_shapes,
         plot_polygon_events_window_minutes=plot_polygon_events_window_minutes,
         plot_backend=plot_backend,
         background_enabled=background_enabled,
@@ -149,10 +170,18 @@ def load_settings(settings_path: Path) -> Settings:
         background_bucket=background_bucket,
         background_product_prefix=background_product_prefix,
         background_channel=background_channel,
+        background_fetch_timeout_seconds=background_fetch_timeout_seconds,
         archive_enabled=archive_enabled,
         archive_save_on_hour_change=archive_save_on_hour_change,
         archive_screenshots_dir=archive_screenshots_dir,
         archive_tables_dir=archive_tables_dir,
         notifications_enabled=notifications_enabled,
         notifications_beep=notifications_beep,
+        cleanup_enabled=cleanup_enabled,
+        cleanup_days_old=cleanup_days_old,
+        fetch_initial_hours=fetch_initial_hours,
+        fetch_overlap_seconds=fetch_overlap_seconds,
+        fetch_timeout_seconds=fetch_timeout_seconds,
+        fetch_state_file=fetch_state_file,
+        enable_fetch_tracker=enable_fetch_tracker,
     )

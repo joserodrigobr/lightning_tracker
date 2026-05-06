@@ -1,0 +1,27 @@
+X-Render-Stage-settings-Ms: 0
+X-Render-Stage-window-Ms: 0
+X-Render-Stage-fetch-window-Ms: 0
+X-Render-Stage-postgres-Ms: 280
+X-Render-Stage-data-load-Ms: 5637
+X-Render-Stage-filter-Ms: 1
+X-Render-Stage-background-Ms: 0
+X-Render-Stage-plot-save-Ms: 61
+X-Last-Update-Local: 17:07:18
+X-Plot-Start-Local: 2026-05-06 14:07:18
+X-Plot-End-Local: 2026-05-06 17:07:18
+X-Image-Time-Local: 2026-05-06 17:04:19
+X-Next-Update-Local: 2026-05-06 17:10:00
+X-Flashes-Count: 0
+X-Events-Count: 0
+X-Mode: 1
+X-Dynamic-Start: 0
+X-Dynamic-End: 0
+X-Initial-Load-Hours: 3
+X-Background: 0
+X-Data-Source: S3 fallback
+X-Background-Settings-Enabled: 0
+X-Background-Applied: 0
+X-Background-Reason: not_requested
+X-Debug-BG-Imshow-Executed: 0
+X-Render-Timings: total=5980ms;settings=0ms;window=0ms;fetch_window=0ms;postgres=280ms;fallback_download=5458ms;fallback_extract=179ms;data_load=5637ms;filter=1ms;background=0ms;plot_save=61ms
+X-Data-Source: S3 fallback

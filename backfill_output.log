@@ -1,0 +1,422 @@
+2026-05-06 09:40:06 [INFO] ======================================================================
+2026-05-06 09:40:06 [INFO] GLM Backfill Ingestion Script
+2026-05-06 09:40:06 [INFO] ======================================================================
+2026-05-06 09:40:06 [INFO] Data path: data/raw/glm_20s_goes
+2026-05-06 09:40:06 [INFO] Limit: 100
+2026-05-06 09:40:06 [INFO] Connecting to PostgreSQL...
+2026-05-06 09:40:06 [INFO] \u2713 Connected to PostgreSQL
+2026-05-06 09:40:06 [INFO] Scanning for .nc files...
+2026-05-06 09:40:06 [INFO] Found 8878 .nc files to consider
+2026-05-06 09:40:06 [INFO] Will process 100 file(s)
+2026-05-06 09:40:06 [INFO] ======================================================================
+2026-05-06 09:40:06 [INFO] [1/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240300000_e20261240300200_c20261240300214.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240300000_e20261240300200_c20261240300214.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [2/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240300200_e20261240300400_c20261240300420.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240300200_e20261240300400_c20261240300420.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [3/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240300400_e20261240301000_c20261240301021.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240300400_e20261240301000_c20261240301021.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [4/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240301000_e20261240301200_c20261240301222.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240301000_e20261240301200_c20261240301222.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [5/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240301200_e20261240301400_c20261240301423.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240301200_e20261240301400_c20261240301423.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [6/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240301400_e20261240302000_c20261240302020.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240301400_e20261240302000_c20261240302020.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [7/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240302000_e20261240302200_c20261240302222.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240302000_e20261240302200_c20261240302222.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [8/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240302200_e20261240302400_c20261240302411.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240302200_e20261240302400_c20261240302411.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [9/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240302400_e20261240303000_c20261240303014.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240302400_e20261240303000_c20261240303014.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [10/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240303000_e20261240303200_c20261240303217.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240303000_e20261240303200_c20261240303217.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [11/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240303200_e20261240303400_c20261240303414.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240303200_e20261240303400_c20261240303414.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [12/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240303400_e20261240304000_c20261240304015.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240303400_e20261240304000_c20261240304015.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [13/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240304000_e20261240304200_c20261240304222.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240304000_e20261240304200_c20261240304222.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [14/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240304200_e20261240304400_c20261240304415.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240304200_e20261240304400_c20261240304415.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [15/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240304400_e20261240305000_c20261240305022.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240304400_e20261240305000_c20261240305022.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [16/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240305000_e20261240305200_c20261240305220.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240305000_e20261240305200_c20261240305220.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [17/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240305200_e20261240305400_c20261240305421.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240305200_e20261240305400_c20261240305421.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [18/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240305400_e20261240306000_c20261240306021.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240305400_e20261240306000_c20261240306021.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [19/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240306000_e20261240306200_c20261240306216.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240306000_e20261240306200_c20261240306216.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [20/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240306200_e20261240306400_c20261240306421.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240306200_e20261240306400_c20261240306421.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [21/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240306400_e20261240307000_c20261240307020.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240306400_e20261240307000_c20261240307020.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [22/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240307000_e20261240307200_c20261240307223.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240307000_e20261240307200_c20261240307223.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [23/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240307200_e20261240307400_c20261240307415.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240307200_e20261240307400_c20261240307415.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [24/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240307400_e20261240308000_c20261240308015.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240307400_e20261240308000_c20261240308015.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [25/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240308000_e20261240308200_c20261240308217.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240308000_e20261240308200_c20261240308217.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [26/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240308200_e20261240308400_c20261240308416.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240308200_e20261240308400_c20261240308416.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [27/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240308400_e20261240309000_c20261240309020.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240308400_e20261240309000_c20261240309020.nc...
+2026-05-06 09:40:06 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:06 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:06 [INFO] [28/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240309000_e20261240309200_c20261240309218.nc
+2026-05-06 09:40:06 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240309000_e20261240309200_c20261240309218.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [29/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240309200_e20261240309400_c20261240309421.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240309200_e20261240309400_c20261240309421.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [30/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240309400_e20261240310000_c20261240310015.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240309400_e20261240310000_c20261240310015.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [31/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240310000_e20261240310200_c20261240310219.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240310000_e20261240310200_c20261240310219.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [32/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240310200_e20261240310400_c20261240310415.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240310200_e20261240310400_c20261240310415.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [33/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240310400_e20261240311000_c20261240311020.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240310400_e20261240311000_c20261240311020.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [34/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240311000_e20261240311200_c20261240311222.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240311000_e20261240311200_c20261240311222.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [35/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240311200_e20261240311400_c20261240311419.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240311200_e20261240311400_c20261240311419.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [36/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240311400_e20261240312000_c20261240312022.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240311400_e20261240312000_c20261240312022.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [37/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240312000_e20261240312200_c20261240312215.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240312000_e20261240312200_c20261240312215.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [38/100] (0s elapsed, 1s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240312200_e20261240312400_c20261240312422.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240312200_e20261240312400_c20261240312422.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [39/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240312400_e20261240313000_c20261240313021.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240312400_e20261240313000_c20261240313021.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [40/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240313000_e20261240313200_c20261240313221.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240313000_e20261240313200_c20261240313221.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [41/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240313200_e20261240313400_c20261240313422.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240313200_e20261240313400_c20261240313422.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [42/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240313400_e20261240314000_c20261240314021.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240313400_e20261240314000_c20261240314021.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [43/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240314000_e20261240314200_c20261240314223.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240314000_e20261240314200_c20261240314223.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [44/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240314200_e20261240314400_c20261240314420.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240314200_e20261240314400_c20261240314420.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [45/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240314400_e20261240315000_c20261240315021.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240314400_e20261240315000_c20261240315021.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [46/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240315000_e20261240315200_c20261240315221.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240315000_e20261240315200_c20261240315221.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [47/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240315200_e20261240315400_c20261240315415.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240315200_e20261240315400_c20261240315415.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [48/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240315400_e20261240316000_c20261240316015.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240315400_e20261240316000_c20261240316015.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [49/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240316000_e20261240316200_c20261240316216.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240316000_e20261240316200_c20261240316216.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [50/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240316200_e20261240316400_c20261240316420.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240316200_e20261240316400_c20261240316420.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [51/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240316400_e20261240317000_c20261240317021.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240316400_e20261240317000_c20261240317021.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [52/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240317000_e20261240317200_c20261240317224.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240317000_e20261240317200_c20261240317224.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [53/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240317200_e20261240317400_c20261240317420.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240317200_e20261240317400_c20261240317420.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [54/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240317400_e20261240318000_c20261240318014.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240317400_e20261240318000_c20261240318014.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [55/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240318000_e20261240318200_c20261240318221.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240318000_e20261240318200_c20261240318221.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [56/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240318200_e20261240318400_c20261240318420.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240318200_e20261240318400_c20261240318420.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [57/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240318400_e20261240319000_c20261240319021.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240318400_e20261240319000_c20261240319021.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [58/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240319000_e20261240319200_c20261240319220.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240319000_e20261240319200_c20261240319220.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [59/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240319200_e20261240319400_c20261240319414.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240319200_e20261240319400_c20261240319414.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [60/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240319400_e20261240320000_c20261240320022.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240319400_e20261240320000_c20261240320022.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [61/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240320000_e20261240320200_c20261240320219.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240320000_e20261240320200_c20261240320219.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [62/100] (0s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240320200_e20261240320400_c20261240320417.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240320200_e20261240320400_c20261240320417.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [63/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240320400_e20261240321000_c20261240321016.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240320400_e20261240321000_c20261240321016.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [64/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240321000_e20261240321200_c20261240321221.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240321000_e20261240321200_c20261240321221.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [65/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240321200_e20261240321400_c20261240321414.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240321200_e20261240321400_c20261240321414.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [66/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240321400_e20261240322000_c20261240322021.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240321400_e20261240322000_c20261240322021.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [67/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240322000_e20261240322200_c20261240322215.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240322000_e20261240322200_c20261240322215.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [68/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240322200_e20261240322400_c20261240322420.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240322200_e20261240322400_c20261240322420.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [69/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240322400_e20261240323000_c20261240323019.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240322400_e20261240323000_c20261240323019.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [70/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240323000_e20261240323200_c20261240323221.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240323000_e20261240323200_c20261240323221.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [71/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240323200_e20261240323400_c20261240323419.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240323200_e20261240323400_c20261240323419.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [72/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240323400_e20261240324000_c20261240324021.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240323400_e20261240324000_c20261240324021.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [73/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240324000_e20261240324200_c20261240324221.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240324000_e20261240324200_c20261240324221.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [74/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240324200_e20261240324400_c20261240324420.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240324200_e20261240324400_c20261240324420.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [75/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240324400_e20261240325000_c20261240325020.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240324400_e20261240325000_c20261240325020.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [76/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240325000_e20261240325200_c20261240325220.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240325000_e20261240325200_c20261240325220.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [77/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240325200_e20261240325400_c20261240325414.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240325200_e20261240325400_c20261240325414.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [78/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240325400_e20261240326000_c20261240326020.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240325400_e20261240326000_c20261240326020.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [79/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240326000_e20261240326200_c20261240326215.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240326000_e20261240326200_c20261240326215.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [80/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240326200_e20261240326400_c20261240326421.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240326200_e20261240326400_c20261240326421.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [81/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240326400_e20261240327000_c20261240327015.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240326400_e20261240327000_c20261240327015.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [82/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240327000_e20261240327200_c20261240327216.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240327000_e20261240327200_c20261240327216.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [83/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240327200_e20261240327400_c20261240327420.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240327200_e20261240327400_c20261240327420.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [84/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240327400_e20261240328000_c20261240328021.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240327400_e20261240328000_c20261240328021.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [85/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240328000_e20261240328200_c20261240328222.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240328000_e20261240328200_c20261240328222.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [86/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240328200_e20261240328400_c20261240328421.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240328200_e20261240328400_c20261240328421.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [87/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240328400_e20261240329000_c20261240329020.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240328400_e20261240329000_c20261240329020.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [88/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240329000_e20261240329200_c20261240329214.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240329000_e20261240329200_c20261240329214.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [89/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240329200_e20261240329400_c20261240329420.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240329200_e20261240329400_c20261240329420.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [90/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240329400_e20261240330000_c20261240330014.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240329400_e20261240330000_c20261240330014.nc...
+2026-05-06 09:40:07 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:07 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:07 [INFO] [91/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240330000_e20261240330200_c20261240330224.nc
+2026-05-06 09:40:07 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240330000_e20261240330200_c20261240330224.nc...
+2026-05-06 09:40:08 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:08 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:08 [INFO] [92/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240330200_e20261240330400_c20261240330415.nc
+2026-05-06 09:40:08 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240330200_e20261240330400_c20261240330415.nc...
+2026-05-06 09:40:08 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:08 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:08 [INFO] [93/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240330400_e20261240331000_c20261240331021.nc
+2026-05-06 09:40:08 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240330400_e20261240331000_c20261240331021.nc...
+2026-05-06 09:40:08 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:08 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:08 [INFO] [94/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240331000_e20261240331200_c20261240331223.nc
+2026-05-06 09:40:08 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240331000_e20261240331200_c20261240331223.nc...
+2026-05-06 09:40:08 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:08 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:08 [INFO] [95/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240331200_e20261240331400_c20261240331420.nc
+2026-05-06 09:40:08 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240331200_e20261240331400_c20261240331420.nc...
+2026-05-06 09:40:08 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:08 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:08 [INFO] [96/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240331400_e20261240332000_c20261240332020.nc
+2026-05-06 09:40:08 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240331400_e20261240332000_c20261240332020.nc...
+2026-05-06 09:40:08 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:08 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:08 [INFO] [97/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240332000_e20261240332200_c20261240332225.nc
+2026-05-06 09:40:08 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240332000_e20261240332200_c20261240332225.nc...
+2026-05-06 09:40:08 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:08 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:08 [INFO] [98/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240332200_e20261240332400_c20261240332421.nc
+2026-05-06 09:40:08 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240332200_e20261240332400_c20261240332421.nc...
+2026-05-06 09:40:08 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:08 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:08 [INFO] [99/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240332400_e20261240333000_c20261240333021.nc
+2026-05-06 09:40:08 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240332400_e20261240333000_c20261240333021.nc...
+2026-05-06 09:40:08 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:08 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:08 [INFO] [100/100] (1s elapsed, 0s remaining) Processing: OR_GLM-L2-LCFA_G19_s20261240333000_e20261240333200_c20261240333221.nc
+2026-05-06 09:40:08 [INFO]   Extracting data from OR_GLM-L2-LCFA_G19_s20261240333000_e20261240333200_c20261240333221.nc...
+2026-05-06 09:40:08 [ERROR]   Error ingesting file: object of type 'Points' has no len()
+2026-05-06 09:40:08 [ERROR]   \u2717 Failed: object of type 'Points' has no len()
+2026-05-06 09:40:08 [INFO] ======================================================================
+2026-05-06 09:40:08 [INFO] SUMMARY
+2026-05-06 09:40:08 [INFO] ======================================================================
+2026-05-06 09:40:08 [INFO] Total files:      100
+2026-05-06 09:40:08 [INFO] Ingested:         0
+2026-05-06 09:40:08 [INFO] Skipped:          0
+2026-05-06 09:40:08 [INFO] Failed:           100
+2026-05-06 09:40:08 [INFO] Total flashes:    0
+2026-05-06 09:40:08 [INFO] Total events:     0
+2026-05-06 09:40:08 [INFO] Total time:       1s (0.0m)
+2026-05-06 09:40:08 [INFO] Rate:             0.00 files/sec

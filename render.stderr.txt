@@ -1,0 +1,17 @@
+X-Last-Update-Local: 16:30:00
+X-Plot-Start-Local: 2026-05-06 16:30:00
+X-Plot-End-Local: 2026-05-06 16:30:00
+X-Image-Time-Local: 2026-05-06 13:56:13
+X-Next-Update-Local: 2026-05-06 14:00:00
+X-Flashes-Count: 0
+X-Events-Count: 0
+X-Mode: 1
+X-Dynamic-Start: 0
+X-Dynamic-End: 0
+X-Initial-Load-Hours: 0
+X-Background: 0
+X-Data-Source: S3 fallback
+X-Background-Settings-Enabled: 1
+X-Background-Applied: 0
+X-Background-Reason: not_requested
+X-Data-Source: S3 fallback

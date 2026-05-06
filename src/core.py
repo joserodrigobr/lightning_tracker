@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import re
 import time
+import threading
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -277,6 +278,105 @@ def run(
         last_fetch_utc=initial_last_fetch_utc,
     )
 
+    fetch_worker_lock = threading.Lock()
+    fetch_worker_thread: threading.Thread | None = None
+    fetch_worker_result: dict[str, object] | None = None
+
+    def _start_fetch_worker(fetch_start: datetime, fetch_end: datetime) -> None:
+        nonlocal fetch_worker_thread, fetch_worker_result
+        if fetch_worker_thread is not None and fetch_worker_thread.is_alive():
+            return
+
+        fetch_worker_result = None
+
+        def _worker() -> None:
+            nonlocal fetch_worker_result
+            worker_result: dict[str, object] = {
+                "fetch_start": fetch_start,
+                "fetch_end": fetch_end,
+                "downloaded": 0,
+                "not_found": 0,
+                "status": "",
+                "flashes": _empty_points_df(),
+                "events": _empty_points_df(),
+            }
+            try:
+                worker_downloader = GLMDownloader(
+                    bucket=settings.aws_bucket,
+                    product_prefix=settings.aws_product_prefix,
+                    goes_number=19,
+                )
+                dl = worker_downloader.download_range(
+                    fetch_start,
+                    fetch_end,
+                    interval_seconds=settings.aws_interval_seconds,
+                    dest_root=settings.raw_dir,
+                )
+                worker_result["downloaded"] = len(dl.downloaded)
+                worker_result["not_found"] = len(dl.not_found)
+                worker_result["status"] = f"Baixados: {len(dl.downloaded)} | Não encontrados: {len(dl.not_found)}"
+
+                events_extract_start_utc = fetch_start
+                if need_events and not events_full_history:
+                    events_extract_start_utc = max(
+                        fetch_start,
+                        fetch_end - timedelta(minutes=int(settings.plot_polygon_events_window_minutes)),
+                    )
+
+                flashes_frames: list[pd.DataFrame] = []
+                events_frames: list[pd.DataFrame] = []
+                for p in dl.downloaded:
+                    try:
+                        pts = extract_points_from_lcfa(p, kind="flash").df
+                        flashes_frames.append(pts)
+
+                        if need_events:
+                            if events_full_history:
+                                do_events = True
+                            else:
+                                file_dt = _glm_start_time_from_name(p.name)
+                                do_events = (file_dt is None) or (file_dt >= events_extract_start_utc)
+
+                            if do_events:
+                                epts = extract_points_from_lcfa(p, kind="event").df
+                                events_frames.append(epts)
+                    except Exception:
+                        continue
+
+                if flashes_frames:
+                    worker_result["flashes"] = pd.concat(flashes_frames, ignore_index=True)
+                if events_frames:
+                    worker_result["events"] = pd.concat(events_frames, ignore_index=True)
+            except Exception as exc:
+                worker_result["status"] = f"Falha no download/processamento: {exc}"
+                logging.exception("Falha no download/processamento: %s", exc)
+
+            with fetch_worker_lock:
+                fetch_worker_result = worker_result
+
+        fetch_worker_thread = threading.Thread(target=_worker, daemon=True)
+        fetch_worker_thread.start()
+
+    def _merge_fetch_worker_result() -> None:
+        nonlocal fetch_worker_thread, fetch_worker_result
+        if fetch_worker_thread is None or fetch_worker_thread.is_alive():
+            return
+        if not fetch_worker_result:
+            fetch_worker_thread = None
+            return
+
+        flashes_df_new = cast(pd.DataFrame, fetch_worker_result.get("flashes", _empty_points_df()))
+        events_df_new = cast(pd.DataFrame, fetch_worker_result.get("events", _empty_points_df()))
+        if not flashes_df_new.empty:
+            state.flashes = pd.concat([state.flashes, flashes_df_new], ignore_index=True)
+        if not events_df_new.empty:
+            state.events = pd.concat([state.events, events_df_new], ignore_index=True)
+
+        state.last_fetch_utc = cast(datetime, fetch_worker_result.get("fetch_end", state.last_fetch_utc))
+        logging.info(str(fetch_worker_result.get("status") or "Fetch worker concluído"))
+        fetch_worker_thread = None
+        fetch_worker_result = None
+
     history_delta = timedelta(hours=settings.history_hours)
 
     # Optional satellite background (ABI IR).
@@ -332,45 +432,15 @@ def run(
 
         status = ""
         if settings.enable_download:
-            try:
-                dl = downloader.download_range(
-                    fetch_start,
-                    fetch_end,
-                    interval_seconds=settings.aws_interval_seconds,
-                    dest_root=settings.raw_dir,
-                )
-                status = f"Baixados: {len(dl.downloaded)} | Não encontrados: {dl.not_found}"
-
-                # For polygon overlay in modes 1/2, keep events recent only.
-                if need_events and not events_full_history:
-                    events_extract_start_utc = max(
-                        fetch_start,
-                        effective_now_utc - timedelta(minutes=int(settings.plot_polygon_events_window_minutes)),
-                    )
-                else:
-                    events_extract_start_utc = fetch_start
-
-                for p in dl.downloaded:
-                    try:
-                        pts = extract_points_from_lcfa(p, kind="flash").df
-                        new_flash_df = pd.concat([new_flash_df, pts], ignore_index=True)
-                        if need_events:
-                            # Avoid parsing/storing huge event histories when only used for the polygon.
-                            if events_full_history:
-                                do_events = True
-                            else:
-                                file_dt = _glm_start_time_from_name(p.name)
-                                do_events = (file_dt is None) or (file_dt >= events_extract_start_utc)
-
-                            if do_events:
-                                epts = extract_points_from_lcfa(p, kind="event").df
-                                new_event_df = pd.concat([new_event_df, epts], ignore_index=True)
-                    except Exception:
-                        continue
-            except Exception as e:
-                logging.exception("Falha no download/processamento: %s", e)
-
-        state.last_fetch_utc = fetch_end
+            _merge_fetch_worker_result()
+            with fetch_worker_lock:
+                worker_busy = fetch_worker_thread is not None and fetch_worker_thread.is_alive()
+            if not worker_busy:
+                fetch_start = state.last_fetch_utc
+                _start_fetch_worker(fetch_start, fetch_end)
+                status = "Fetch iniciado em background"
+            else:
+                status = "Fetch em background"
 
         # Keep only within max radius for memory/perf
         max_r = float(max(settings.radii_km))

@@ -5,6 +5,7 @@ namespace LightningTracker.WebApi.Services;
 
 public sealed class PythonRenderService
 {
+    private readonly ILogger<PythonRenderService> _logger;
     private readonly string _pythonCommand;
     private readonly string _workingDirectory;
     private readonly string _settingsPath;
@@ -16,12 +17,15 @@ public sealed class PythonRenderService
         IReadOnlyDictionary<string, string> Headers
     );
 
-    public PythonRenderService(IConfiguration config, IHostEnvironment env)
+    public PythonRenderService(ConfigurationService config, IHostEnvironment env, ILogger<PythonRenderService> logger)
     {
-        _pythonCommand = config["Python:Command"] ?? "python";
-        _workingDirectory = config["Python:WorkingDirectory"] ?? "..\\..";
-        _settingsPath = config["Python:SettingsPath"] ?? "config\\settings.yaml";
-        _postgresDsn = config["Data:PostgresDsn"] ?? Environment.GetEnvironmentVariable("LIGHTNING_TRACKER_PG_DSN");
+        _logger = logger;
+        _pythonCommand = config.GetPythonCommand();
+        _workingDirectory = config.GetPythonWorkingDirectory();
+        _settingsPath = config.GetPythonWorkingDirectory() is string wd 
+            ? Path.Combine(wd, "config", "settings.yaml")
+            : "config\\settings.yaml";
+        _postgresDsn = config.GetPostgresDsn();
         _contentRoot = env.ContentRootPath;
     }
 
@@ -37,6 +41,7 @@ public sealed class PythonRenderService
     )
     {
         const int renderTimeoutSeconds = 300;
+        var processStarted = Stopwatch.StartNew();
 
         var args = new List<string>
         {
@@ -80,6 +85,8 @@ public sealed class PythonRenderService
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             CreateNoWindow = true,
+            StandardErrorEncoding = System.Text.Encoding.UTF8,
+            StandardOutputEncoding = System.Text.Encoding.UTF8,
         };
 
         foreach (var a in args)
@@ -87,11 +94,18 @@ public sealed class PythonRenderService
 
         if (!string.IsNullOrWhiteSpace(_postgresDsn))
             psi.Environment["LIGHTNING_TRACKER_PG_DSN"] = _postgresDsn;
+        
+        // Ensure Python uses UTF-8
+        psi.Environment["PYTHONIOENCODING"] = "utf-8";
 
         using var proc = new Process { StartInfo = psi };
 
         if (!proc.Start())
             throw new InvalidOperationException("Falha ao iniciar o processo Python.");
+
+        // Log for debugging
+        var debugInfo = $"[DEBUG] Python subprocess started: wd={psi.WorkingDirectory}, settings={_settingsPath}";
+        _logger.LogInformation(debugInfo);
 
         await using var ms = new MemoryStream();
         var stdoutTask = proc.StandardOutput.BaseStream.CopyToAsync(ms, cancellationToken);
@@ -112,7 +126,25 @@ public sealed class PythonRenderService
                 // ignore process cleanup failures
             }
 
-            throw new TimeoutException($"Python render excedeu {renderTimeoutSeconds} segundos.");
+            string timeoutStderr = "";
+            try
+            {
+                var stderrCompleted = await Task.WhenAny(stderrTask, Task.Delay(TimeSpan.FromSeconds(5), cancellationToken));
+                if (stderrCompleted == stderrTask)
+                    timeoutStderr = await stderrTask ?? "";
+            }
+            catch
+            {
+                // ignore diagnostics collection failures
+            }
+
+            var elapsed = processStarted.Elapsed;
+            if (!string.IsNullOrWhiteSpace(timeoutStderr))
+                _logger.LogWarning("Python render timed out after {ElapsedMs}ms. STDERR: {Stderr}", elapsed.TotalMilliseconds, timeoutStderr);
+            else
+                _logger.LogWarning("Python render timed out after {ElapsedMs}ms.", elapsed.TotalMilliseconds);
+
+            throw new TimeoutException($"Python render excedeu {renderTimeoutSeconds} segundos. Elapsed={elapsed.TotalSeconds:F1}s. {timeoutStderr}".Trim());
         }
 
         var stderr = await stderrTask ?? "";
@@ -120,6 +152,21 @@ public sealed class PythonRenderService
         {
             throw new InvalidOperationException($"Python retornou código {proc.ExitCode}. STDERR: {stderr}");
         }
+
+        if (!string.IsNullOrWhiteSpace(stderr))
+        {
+            _logger.LogDebug("Python render stderr: {Stderr}", stderr);
+            
+            // Write stderr to debug file for diagnostics
+            try
+            {
+                var debugFile = Path.Combine(_contentRoot, "..", "..", "python_stderr_debug.txt");
+                System.IO.File.WriteAllText(debugFile, stderr);
+            }
+            catch { }
+        }
+
+        _logger.LogInformation("Python render finished in {ElapsedMs}ms.", processStarted.Elapsed.TotalMilliseconds);
 
         var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var line in stderr.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))

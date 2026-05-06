@@ -1,0 +1,7 @@
+C:\Users\samue\OneDrive\Área de Trabalho\blueocean\deteccao_relampagos\lightning_tracker\webapp\backend\obj_validate\Debug\net8.0\LightningTracker.WebApi.csproj.AssemblyReference.cache
+C:\Users\samue\OneDrive\Área de Trabalho\blueocean\deteccao_relampagos\lightning_tracker\webapp\backend\obj_validate\Debug\net8.0\LightningTracker.WebApi.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\samue\OneDrive\Área de Trabalho\blueocean\deteccao_relampagos\lightning_tracker\webapp\backend\obj_validate\Debug\net8.0\LightningTracker.WebApi.AssemblyInfoInputs.cache
+C:\Users\samue\OneDrive\Área de Trabalho\blueocean\deteccao_relampagos\lightning_tracker\webapp\backend\obj_validate\Debug\net8.0\LightningTracker.WebApi.AssemblyInfo.cs
+C:\Users\samue\OneDrive\Área de Trabalho\blueocean\deteccao_relampagos\lightning_tracker\webapp\backend\obj_validate\Debug\net8.0\LightningTracker.WebApi.csproj.CoreCompileInputs.cache
+C:\Users\samue\OneDrive\Área de Trabalho\blueocean\deteccao_relampagos\lightning_tracker\webapp\backend\obj_validate\Debug\net8.0\LightningTracker.WebApi.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\samue\OneDrive\Área de Trabalho\blueocean\deteccao_relampagos\lightning_tracker\webapp\backend\obj_validate\Debug\net8.0\LightningTracker.WebApi.sourcelink.json

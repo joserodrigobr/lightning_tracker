@@ -1,0 +1,45 @@
+X-Render-Stage-settings-Ms: 3
+X-Render-Stage-window-Ms: 0
+X-Render-Stage-fetch-window-Ms: 0
+X-Render-Stage-postgres-Ms: 181
+X-Render-Stage-data-load-Ms: 1
+X-Render-Stage-filter-Ms: 3
+X-Render-Stage-background-Ms: 678
+X-Render-Stage-plot-save-Ms: 106
+X-Last-Update-Local: 16:30:00
+X-Plot-Start-Local: 2026-05-06 16:30:00
+X-Plot-End-Local: 2026-05-06 16:30:00
+X-Image-Time-Local: 2026-05-06 15:14:23
+X-Next-Update-Local: 2026-05-06 15:20:00
+X-Flashes-Count: 0
+X-Events-Count: 0
+X-Mode: 1
+X-Dynamic-Start: 0
+X-Dynamic-End: 0
+X-Initial-Load-Hours: 0
+X-Background: 1
+X-Data-Source: S3 fallback
+X-Background-Settings-Enabled: 1
+X-Background-Applied: 1
+X-Background-Reason: ok
+X-Background-NetCDF-Path-Kind: relative
+X-Background-NetCDF-Path: data\raw\abi_ir\2026\126\18\OR_ABI-L2-CMIPF-M6C13_G19_s20261261800211_e20261261809533_c20261261809585.nc
+X-Background-Dt-UTC: 2026-05-06T18:14:23.475665+00:00
+X-Background-Extent: -43.809,-39.911,-24.222,-20.618
+X-Background-S3-Bucket: noaa-goes19
+X-Background-S3-Product: ABI-L2-CMIPF
+X-Background-S3-Channel: 13
+X-Background-S3-Prefix0: ABI-L2-CMIPF/2026/126/18/
+X-Background-S3-Prefix1: ABI-L2-CMIPF/2026/126/17/
+X-Background-S3-Key: ABI-L2-CMIPF/2026/126/18/OR_ABI-L2-CMIPF-M6C13_G19_s20261261800211_e20261261809533_c20261261809585.nc
+X-Background-File-Time-UTC: 2026-05-06T18:00:21+00:00
+X-Background-File: OR_ABI-L2-CMIPF-M6C13_G19_s20261261800211_e20261261809533_c20261261809585.nc
+X-Background-Cache: miss
+X-Background-Subset-Origin: upper
+X-Background-Subset-Shape: 179x196
+X-Background-Subset-Step: 1
+X-Background-Subset-Finite: 35084
+X-Background-Fetch-Timeout-Sec: 15
+X-Debug-BG-Imshow-Executed: 1
+X-Render-Timings: total=972ms;settings=3ms;window=0ms;fetch_window=0ms;postgres=181ms;fallback_download=1ms;fallback_extract=0ms;data_load=1ms;filter=3ms;background=678ms;plot_save=106ms
+X-Data-Source: S3 fallback

@@ -11,6 +11,14 @@ data:
   processed_dir: data/processed
   # If true, attempts to download GOES-19 GLM files from AWS public S3.
   enable_download: true
+  # Fetch strategy: initial window and incremental fetcher
+  fetch_initial_hours: 3
+  fetch_overlap_seconds: 10
+  fetch_timeout_seconds: 15
+  fetch_state_file: data/.fetch_state.json
+  enable_fetch_tracker: true
+  cleanup_enabled: true
+  cleanup_days_old: 3
 
 aws:
   bucket: noaa-goes19
@@ -29,6 +37,7 @@ plot:
   max_points: 30000
   dpi: 120
   show_polygon: true
+  show_admin_shapes: false
   # Para o polígono por eventos (em modos 1/2), mantém apenas eventos recentes (evita explodir memória).
   polygon_events_window_minutes: 15
   # Matplotlib backend: auto | TkAgg | Agg
@@ -46,6 +55,8 @@ background:
   vmin_k: 190
   vmax_k: 310
   max_dim: 600
+  # Timeout (seconds) for background fetch in web renderer
+  fetch_timeout_seconds: 15
 
 archive:
   enabled: true

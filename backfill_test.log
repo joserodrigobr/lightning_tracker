@@ -1,0 +1,10 @@
+2026-05-06 09:38:48 [INFO] ======================================================================
+2026-05-06 09:38:48 [INFO] GLM Backfill Ingestion Script
+2026-05-06 09:38:48 [INFO] ======================================================================
+2026-05-06 09:38:48 [INFO] Data path: data/raw/glm_20s_goes
+2026-05-06 09:38:48 [INFO] Limit: all
+2026-05-06 09:38:48 [INFO] Connecting to PostgreSQL...
+2026-05-06 09:38:48 [INFO] \u2713 Connected to PostgreSQL
+2026-05-06 09:38:48 [INFO] Scanning for .nc files...
+2026-05-06 09:38:48 [INFO] Found 0 .nc files to consider
+2026-05-06 09:38:48 [WARNING] No .nc files found

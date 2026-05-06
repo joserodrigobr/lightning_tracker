@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import time
 import textwrap
 from functools import lru_cache
 from dataclasses import dataclass
@@ -13,6 +14,7 @@ from typing import cast
 
 import numpy as np
 import pandas as pd
+import logging
 
 # Force headless rendering for web/server usage.
 os.environ.setdefault("MPLBACKEND", "Agg")
@@ -115,6 +117,41 @@ def _to_utc(dt_local: datetime) -> datetime:
     if dt_local.tzinfo is None:
         return dt_local.replace(tzinfo=timezone.utc)
     return dt_local.astimezone(timezone.utc)
+
+
+def _download_range_with_timeout(
+    downloader: GLMDownloader,
+    start_utc: datetime,
+    end_utc: datetime,
+    *,
+    interval_seconds: int,
+    dest_root: Path,
+    timeout_seconds: int,
+    logger,
+):
+    result: dict[str, object] = {"value": None, "error": None}
+
+    def _worker() -> None:
+        try:
+            result["value"] = downloader.download_range(
+                start_utc,
+                end_utc,
+                interval_seconds=interval_seconds,
+                dest_root=dest_root,
+            )
+        except Exception as exc:
+            result["error"] = exc
+
+    thread = threading.Thread(target=_worker, daemon=True)
+    thread.start()
+    thread.join(timeout=max(1, int(timeout_seconds)))
+    if thread.is_alive():
+        logger.warning("GLM download timed out after %ss; continuing without S3 fallback", timeout_seconds)
+        return None
+    if result["error"] is not None:
+        logger.warning("GLM download failed: %s", result["error"])
+        return None
+    return result["value"]
 
 
 def _set_extent(ax, *, lat0: float, lon0: float, max_radius_km: float) -> tuple[float, float, float, float]:
@@ -391,7 +428,21 @@ def render_png(
     settings_path: Path,
     params: RenderParams,
 ) -> tuple[bytes, RenderMetadata, dict[str, str]]:
+    render_started = time.perf_counter()
+    stage_started = render_started
+    stage_timings: dict[str, float] = {}
+
+    def mark_stage(name: str) -> None:
+        nonlocal stage_started
+        now = time.perf_counter()
+        stage_ms = (now - stage_started) * 1000.0
+        stage_timings[name] = stage_ms
+        sys.stderr.write(f"X-Render-Stage-{name.replace('_', '-')}-Ms: {stage_ms:.0f}\n")
+        sys.stderr.flush()
+        stage_started = now
+
     settings = load_settings(settings_path)
+    mark_stage("settings")
 
     # Determine plotting window.
     now_local = datetime.now().astimezone(params.start_local.tzinfo)
@@ -403,6 +454,7 @@ def render_png(
         plot_end = now_local
     if plot_end < plot_start:
         plot_end = plot_start
+    mark_stage("window")
 
     lag = timedelta(seconds=int(settings.aws_availability_lag_sec))
     effective_now_utc = datetime.now(timezone.utc) - lag
@@ -426,12 +478,14 @@ def render_png(
         midnight_local = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
         midnight_utc = midnight_local.astimezone(timezone.utc)
         fetch_start_utc = max(end_utc - timedelta(seconds=default_load_seconds), midnight_utc)
+    mark_stage("fetch_window")
 
     downloader = GLMDownloader(bucket=settings.aws_bucket, product_prefix=settings.aws_product_prefix, goes_number=19)
 
     dsn = get_postgres_dsn()
     flashes: list[pd.DataFrame] = []
     events: list[pd.DataFrame] = []
+    data_source = "S3 fallback"
     need_events = True
     events_full_history = params.mode in (3, 4)
     if need_events and not events_full_history:
@@ -449,14 +503,33 @@ def render_png(
                 events_df_db = load_points_from_postgres(dsn=dsn, kind="event", start_utc=events_extract_start_utc, end_utc=end_utc)
                 if not events_df_db.empty:
                     events.append(events_df_db)
+            if flashes or events:
+                data_source = "Postgres"
         except Exception:
             # DB is optional; fall back to the existing download path.
             flashes = []
             events = []
+            data_source = "S3 fallback"
+    mark_stage("postgres")
 
     if not flashes:
-        dl = downloader.download_range(fetch_start_utc, end_utc, interval_seconds=settings.aws_interval_seconds, dest_root=settings.raw_dir)
+        fallback_started = time.perf_counter()
+        dl = _download_range_with_timeout(
+            downloader,
+            fetch_start_utc,
+            end_utc,
+            interval_seconds=settings.aws_interval_seconds,
+            dest_root=settings.raw_dir,
+            timeout_seconds=int(settings.fetch_timeout_seconds),
+            logger=logging.getLogger(__name__),
+        )
+        data_source = "S3 fallback"
+        stage_timings["fallback_download"] = (time.perf_counter() - fallback_started) * 1000.0
 
+        if dl is None:
+            dl = type("DownloadResult", (), {"downloaded": [], "not_found": []})()
+
+        extract_started = time.perf_counter()
         for p in dl.downloaded:
             try:
                 fdf = extract_points_from_lcfa(p, kind="flash").df
@@ -469,6 +542,8 @@ def render_png(
                     events.append(edf)
             except Exception:
                 continue
+        stage_timings["fallback_extract"] = (time.perf_counter() - extract_started) * 1000.0
+    mark_stage("data_load")
 
     flashes_df = pd.concat(flashes, ignore_index=True) if flashes else pd.DataFrame(columns=["time", "lat", "lon"])
     events_df = pd.concat(events, ignore_index=True) if events else pd.DataFrame(columns=["time", "lat", "lon"])
@@ -497,6 +572,7 @@ def render_png(
 
     if len(events_df) > int(settings.plot_max_points):
         events_df = events_df.sample(int(settings.plot_max_points), random_state=0)
+    mark_stage("filter")
 
     # Background overlay.
     bg_headers: dict[str, str] = {}
@@ -534,12 +610,12 @@ def render_png(
 
             worker = threading.Thread(target=_load_background, daemon=True)
             worker.start()
-            worker.join(timeout=10)
+            worker.join(timeout=max(1, int(settings.background_fetch_timeout_seconds)))
 
             if worker.is_alive():
                 bg = None
                 bg_diag.setdefault("reason", "background_timeout")
-                bg_diag.setdefault("detail", "background fetch timed out")
+                bg_diag.setdefault("detail", f"background fetch timed out after {int(settings.background_fetch_timeout_seconds)}s")
             elif bg_result["error"] is not None:
                 bg = None
                 e = bg_result["error"]
@@ -582,9 +658,11 @@ def render_png(
             v = bg_diag.get(diag_key)
             if v:
                 bg_headers[header_key] = str(v)
+        bg_headers["X-Background-Fetch-Timeout-Sec"] = str(int(settings.background_fetch_timeout_seconds))
     else:
         bg_headers["X-Background-Applied"] = "0"
         bg_headers["X-Background-Reason"] = "not_requested"
+    mark_stage("background")
 
     # Render figure.
     figsize = (6.6, 5.6) if params.thumb else (8.4, 7.2)
@@ -594,7 +672,11 @@ def render_png(
     fig.patch.set_facecolor("white")
     fig.subplots_adjust(left=0.005, right=0.995, top=0.995, bottom=0.005)
     lon_min, lon_max, lat_min, lat_max = _set_extent(ax, lat0=params.lat0, lon0=params.lon0, max_radius_km=max_r)
+    
+    # Track background composition for diagnostics
+    bg_imshow_executed = 0
     if bg is not None:
+        bg_imshow_executed = 1
         bg_img = ax.imshow(
             bg.data,
             extent=bg.extent,
@@ -606,11 +688,10 @@ def render_png(
             zorder=0,
             aspect="auto",
         )
-        # NOTE: do not clip the background to the 200 km ring — keep full ABI overlay so
-        # flashes and IR remain visible. Previous iteration clipped the background which
-        # hid content; reverting to unmasked background.
+    bg_headers["X-Debug-BG-Imshow-Executed"] = str(bg_imshow_executed)
 
-    _plot_admin_shapes(ax, lat0=params.lat0, lon0=params.lon0)
+    if settings.plot_show_admin_shapes:
+        _plot_admin_shapes(ax, lat0=params.lat0, lon0=params.lon0)
 
     ring_handles, ring_labels, ring_title = _plot_rings(
         ax,
@@ -744,8 +825,16 @@ def render_png(
     # Save without extra padding so the PNG contains the full axes content.
     fig.savefig(buf, format="png", bbox_inches="tight", pad_inches=0)
     plt.close(fig)
+    mark_stage("plot_save")
 
     png = buf.getvalue()
+    total_ms = (time.perf_counter() - render_started) * 1000.0
+    timing_parts = [f"total={total_ms:.0f}ms"]
+    for key in ("settings", "window", "fetch_window", "postgres", "fallback_download", "fallback_extract", "data_load", "filter", "background", "plot_save"):
+        value = stage_timings.get(key)
+        if value is not None:
+            timing_parts.append(f"{key}={value:.0f}ms")
+    bg_headers["X-Render-Timings"] = ";".join(timing_parts)
     last_update_local = plot_end.strftime("%H:%M:%S")
     metadata = RenderMetadata(
         last_update_local=last_update_local,
@@ -761,6 +850,7 @@ def render_png(
         image_time_local=image_time_local,
         next_update_local=next_update_local,
     )
+    bg_headers["X-Data-Source"] = data_source
     return png, metadata, bg_headers
 
 
@@ -832,6 +922,8 @@ def main() -> int:
     sys.stderr.write(f"X-Dynamic-End: {int(metadata.dynamic_end)}\n")
     sys.stderr.write(f"X-Initial-Load-Hours: {metadata.initial_load_hours}\n")
     sys.stderr.write(f"X-Background: {int(metadata.background)}\n")
+    if extra_headers.get("X-Data-Source"):
+        sys.stderr.write(f"X-Data-Source: {extra_headers['X-Data-Source']}\n")
 
     for k, v in (extra_headers or {}).items():
         if not k.startswith("X-"):

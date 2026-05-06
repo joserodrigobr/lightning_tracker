@@ -12,12 +12,14 @@ public sealed class PythonTableService
     private readonly string _contentRoot;
     private readonly string? _postgresDsn;
 
-    public PythonTableService(IConfiguration config, IHostEnvironment env)
+    public PythonTableService(ConfigurationService config, IHostEnvironment env)
     {
-        _pythonCommand = config["Python:Command"] ?? "python";
-        _workingDirectory = config["Python:WorkingDirectory"] ?? "..\\..";
-        _settingsPath = config["Python:SettingsPath"] ?? "config\\settings.yaml";
-        _postgresDsn = config["Data:PostgresDsn"] ?? Environment.GetEnvironmentVariable("LIGHTNING_TRACKER_PG_DSN");
+        _pythonCommand = config.GetPythonCommand();
+        _workingDirectory = config.GetPythonWorkingDirectory();
+        _settingsPath = config.GetPythonWorkingDirectory() is string wd 
+            ? Path.Combine(wd, "config", "settings.yaml")
+            : "config\\settings.yaml";
+        _postgresDsn = config.GetPostgresDsn();
         _contentRoot = env.ContentRootPath;
     }
 

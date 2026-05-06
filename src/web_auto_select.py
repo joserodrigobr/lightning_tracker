@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sqlite3
+import threading
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -51,7 +52,28 @@ def _load_takers(db_path: Path) -> list[dict[str, object]]:
 
 def _load_flashes(settings, start_utc: datetime, end_utc: datetime) -> pd.DataFrame:
     downloader = GLMDownloader(bucket=settings.aws_bucket, product_prefix=settings.aws_product_prefix, goes_number=19)
-    dl = downloader.download_range(start_utc, end_utc, interval_seconds=settings.aws_interval_seconds, dest_root=settings.raw_dir)
+    result: dict[str, object] = {"value": None, "error": None}
+
+    def _worker() -> None:
+        try:
+            result["value"] = downloader.download_range(
+                start_utc,
+                end_utc,
+                interval_seconds=settings.aws_interval_seconds,
+                dest_root=settings.raw_dir,
+            )
+        except Exception as exc:
+            result["error"] = exc
+
+    thread = threading.Thread(target=_worker, daemon=True)
+    thread.start()
+    thread.join(timeout=max(1, int(settings.fetch_timeout_seconds)))
+    if thread.is_alive() or result["error"] is not None:
+        return pd.DataFrame(columns=["time", "lat", "lon"])
+
+    dl = result["value"]
+    if dl is None:
+        return pd.DataFrame(columns=["time", "lat", "lon"])
 
     flashes = []
     for path in dl.downloaded:

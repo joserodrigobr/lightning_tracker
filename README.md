@@ -34,7 +34,7 @@ Os arquivos mais importantes de configuracao sao:
 
 - `config/settings.yaml` - parametros de execucao do pipeline Python.
 - `config/service_takers.csv` - fallback da lista de tomadores de servico.
-- `webapp/backend/appsettings.json` - comandos e caminhos usados pelo backend para chamar o Python.
+- `webapp/backend/appsettings.json` - comandos e caminhos locais usados pelo backend para chamar o Python.
 
 Pontos relevantes do backend:
 
@@ -43,10 +43,24 @@ Pontos relevantes do backend:
 - `Python:SettingsPath` aponta para `config/settings.yaml`.
 - `Data:ServiceTakersDbPath` aponta para o SQLite local de tomadores.
 - `Data:TablesRootPath` aponta para a raiz dos CSVs de tabela.
+- `LIGHTNING_TRACKER_PG_DSN` define a conexao com PostgreSQL. Se a variavel nao estiver configurada, o backend e os scripts Python voltam para o fluxo antigo com download S3 e armazenamento em arquivos.
+
+Exemplo de configuracao no PowerShell:
+
+```powershell
+$env:LIGHTNING_TRACKER_PG_DSN = 'host=127.0.0.1 port=6543 dbname=lightning user=user password=pass'
+```
 
 ## Como rodar o backend
 
 O backend exposto ao frontend roda em `http://localhost:5080` por padrao, conforme `webapp/backend/Properties/launchSettings.json`.
+
+**Para documentacao completa do backend**, veja [webapp/backend/README.md](webapp/backend/README.md) — inclui:
+- Arquitetura de dois fluxos (Legacy vs Modern)
+- Ciclo de vida dos dados (S3 → PostgreSQL → render PNG)
+- Politica de limpeza e retencao
+- Caracteristicas de performance
+- Troubleshooting
 
 ### Rodar localmente
 
@@ -68,6 +82,22 @@ dotnet run --project webapp/backend
 - Renderiza PNGs chamando `python -m src.web_render`.
 - Gera tabelas chamando `python -m src.web_tables`.
 - Faz cache de frames de renderizacao.
+- No fluxo comum, o render inicial usa fundo IR desligado por padrao para evitar o caminho lento de S3.
+
+### Validacao de producao
+
+Os seguintes pontos ja foram validados no ambiente atual:
+
+- Consulta de 6.000 eventos no Postgres em cerca de 65 ms.
+- Fallback para S3 quando `LIGHTNING_TRACKER_PG_DSN` nao esta definido.
+- Build limpa do backend em saida isolada sem conflitos de lock.
+- Consumo atual de banco em torno de 0,31 GB para 217 arquivos GLM ingeridos.
+
+Projecao aproximada com o volume medido atualmente:
+
+- 1 dia de dados: cerca de 4,1 GB.
+- 7 dias de dados: cerca de 28,4 GB.
+- 30 dias de dados: cerca de 121,6 GB.
 
 ## Como rodar o frontend
 
@@ -254,6 +284,14 @@ O utilitario abaixo recria o SQLite usado pelo backend a partir do CSV bruto:
 
 ```powershell
 python scripts/create_service_takers_db.py --csv-path Tomadores_de_servico_latlon.csv --db-path webapp/backend/db/service_takers.sqlite
+```
+
+### Sincronizacao recente de GLM
+
+O script abaixo baixa a janela recente de GLM, grava os blobs brutos no Postgres e remove arquivos antigos fora da retenção configurada:
+
+```powershell
+python scripts/sync_recent_glm_to_postgres.py --settings config/settings.yaml --retention-hours 3 --lookback-minutes 5
 ```
 
 ## Docker

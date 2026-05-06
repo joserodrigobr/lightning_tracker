@@ -28,14 +28,14 @@ public sealed class TableCatalogService
     private readonly string _contentRoot;
     private readonly string? _postgresDsn;
 
-    public TableCatalogService(IConfiguration config, IHostEnvironment env)
+    public TableCatalogService(ConfigurationService config, IHostEnvironment env)
     {
-        var tablesRoot = config["Data:TablesRootPath"] ?? @"..\..\output\tables";
+        var tablesRoot = config.GetTablesRootPath();
         _tablesRoot = Path.IsPathRooted(tablesRoot)
             ? tablesRoot
             : Path.GetFullPath(Path.Combine(env.ContentRootPath, tablesRoot));
         _contentRoot = env.ContentRootPath;
-        _postgresDsn = config["Data:PostgresDsn"] ?? Environment.GetEnvironmentVariable("LIGHTNING_TRACKER_PG_DSN");
+        _postgresDsn = config.GetPostgresDsn();
     }
 
     public async Task<IReadOnlyList<SavedTableSummary>> GetLatestAsync(int takerId, string takerName, int limit, CancellationToken cancellationToken)

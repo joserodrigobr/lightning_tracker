@@ -10,9 +10,9 @@ public sealed class ServiceTakerRepository
     private readonly string _sqlitePath;
     private readonly string _fallbackCsvPath;
 
-    public ServiceTakerRepository(IConfiguration config, IHostEnvironment env)
+    public ServiceTakerRepository(Services.ConfigurationService config, IHostEnvironment env)
     {
-        var sqlitePath = config["Data:ServiceTakersDbPath"] ?? "db/service_takers.sqlite";
+        var sqlitePath = config.GetServiceTakersDbPath();
         _sqlitePath = Path.IsPathRooted(sqlitePath)
             ? sqlitePath
             : Path.GetFullPath(Path.Combine(env.ContentRootPath, sqlitePath));

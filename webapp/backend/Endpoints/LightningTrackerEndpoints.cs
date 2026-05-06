@@ -1,3 +1,4 @@
+using System.Web;
 using LightningTracker.WebApi.Data;
 using LightningTracker.WebApi.Services;
 
@@ -47,6 +48,11 @@ public static class LightningTrackerEndpoints
                 safeBackground
             );
 
+            if (safeRequest.StartLocal is null && safeRequest.EndLocal is null && safeRequest.InitialLoadHours < 3)
+            {
+                safeRequest = safeRequest with { InitialLoadHours = 3 };
+            }
+
             var renderResult = await renderer.RenderAsync(
                 taker,
                 safeRequest.Mode,
@@ -62,7 +68,7 @@ public static class LightningTrackerEndpoints
             var metadata = renderResult.Metadata;
 
             foreach (var header in metadata.Headers)
-                response.Headers[header.Key] = header.Value;
+                SetResponseHeader(response, header.Key, header.Value);
 
             return Results.File(png, "image/png");
         });
@@ -70,7 +76,7 @@ public static class LightningTrackerEndpoints
         app.MapGet("/api/render/frame", async (
             HttpRequest request,
             ServiceTakerRepository repo,
-            RenderFrameCacheService frameCache,
+            PythonRenderService renderer,
             HttpResponse response,
             CancellationToken ct
         ) =>
@@ -96,7 +102,12 @@ public static class LightningTrackerEndpoints
                 safeBackground
             );
 
-            var renderResult = await frameCache.RenderCachedAsync(
+            if (safeRequest.StartLocal is null && safeRequest.EndLocal is null && safeRequest.InitialLoadHours < 3)
+            {
+                safeRequest = safeRequest with { InitialLoadHours = 3 };
+            }
+
+            var renderResult = await renderer.RenderAsync(
                 taker,
                 safeRequest.Mode,
                 safeRequest.StartLocal,
@@ -111,9 +122,8 @@ public static class LightningTrackerEndpoints
             var metadata = renderResult.Metadata;
 
             foreach (var header in metadata.Headers)
-                response.Headers[header.Key] = header.Value;
+                SetResponseHeader(response, header.Key, header.Value);
 
-            response.Headers["X-Render-Cache"] = "hit-or-created";
             response.Headers["X-Render-Frame-Thumb"] = safeThumb != 0 ? "1" : "0";
 
             return Results.File(png, "image/png");
@@ -181,5 +191,18 @@ public static class LightningTrackerEndpoints
 
         var text = value.ToString().Trim();
         return string.IsNullOrWhiteSpace(text) ? null : text;
+    }
+
+    private static void SetResponseHeader(HttpResponse response, string key, string? value)
+    {
+        if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value))
+            return;
+
+        // HTTP headers must be ASCII-safe. Encode non-ASCII characters using URL encoding (percent-encoding).
+        var encoded = System.Web.HttpUtility.UrlEncode(value, System.Text.Encoding.UTF8);
+        if (string.IsNullOrWhiteSpace(encoded))
+            return;
+
+        response.Headers[key] = encoded;
     }
 }

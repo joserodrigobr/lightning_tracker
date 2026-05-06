@@ -2,6 +2,8 @@ import './App.css'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+const DEFAULT_RENDER_HOURS = 3
+
 const MODES = [
   { value: 1, label: 'Flashes (markers coloridos por tempo)' },
   { value: 2, label: 'Flashes (densidade)' },
@@ -28,9 +30,30 @@ function buildQuery(params) {
 }
 
 function formatWindowLabel(startLocal, endLocal) {
-  const startLabel = startLocal || '00:00 (dinâmico)'
+  const startLabel = startLocal || `Últimas ${DEFAULT_RENDER_HOURS}h (dinâmico)`
   const endLabel = endLocal || 'agora'
   return `${startLabel} → ${endLabel}`
+}
+
+function formatLocalIso(dt) {
+  const y = dt.getFullYear()
+  const m = String(dt.getMonth() + 1).padStart(2, '0')
+  const d = String(dt.getDate()).padStart(2, '0')
+  const hh = String(dt.getHours()).padStart(2, '0')
+  const mm = String(dt.getMinutes()).padStart(2, '0')
+  const ss = String(dt.getSeconds()).padStart(2, '0')
+  return `${y}-${m}-${d}T${hh}:${mm}:${ss}`
+}
+
+function getRollingRenderWindow(hours = DEFAULT_RENDER_HOURS) {
+  const safeHours = Math.min(3, Math.max(1, Number(hours) || DEFAULT_RENDER_HOURS))
+  const end = new Date()
+  const start = new Date(end.getTime() - safeHours * 60 * 60 * 1000)
+  return {
+    startLocal: formatLocalIso(start),
+    endLocal: formatLocalIso(end),
+    initialLoadHours: safeHours,
+  }
 }
 
 function getModeLabel(mode) {
@@ -40,6 +63,11 @@ function getModeLabel(mode) {
 function toIntOrDash(value) {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? String(parsed) : '—'
+}
+
+function formatDataSourceLabel(value) {
+  if (!value) return 'Origem indisponível'
+  return value === 'Postgres' ? 'Postgres' : 'S3 fallback'
 }
 
 function formatSavedTableLabel(item) {
@@ -77,11 +105,11 @@ function App() {
   const [takerId, setTakerId] = useState('')
   const [mode, setMode] = useState(1)
 
-  // Empty means dynamic default (00:00 -> now)
+  // Empty means use the rolling default window (last 3h -> now)
   const [startLocal, setStartLocal] = useState('')
   const [endLocal, setEndLocal] = useState('')
-  const [initialLoadHours, setInitialLoadHours] = useState(0)
-  const [backgroundIr, setBackgroundIr] = useState(true)
+  const [initialLoadHours, setInitialLoadHours] = useState(DEFAULT_RENDER_HOURS)
+  const [backgroundIr, setBackgroundIr] = useState(false)
 
   const [plotUrl, setPlotUrl] = useState('')
   const plotUrlRef = useRef('')
@@ -105,6 +133,7 @@ function App() {
   const [selectedSavedTable, setSelectedSavedTable] = useState('')
   const [timeViewMode, setTimeViewMode] = useState('window')
   const autoSelectRequestedRef = useRef(false)
+  const renderInFlightRef = useRef(false)
 
   const selectedTaker = useMemo(() => {
     if (!takerId) return null
@@ -140,12 +169,32 @@ function App() {
     return `Janela: ${effectiveWindowLabel}`
   }, [effectiveWindowLabel, lastUpdateLocal, timeViewMode])
 
+  const sourceLabel = useMemo(() => formatDataSourceLabel(renderMeta.dataSource), [renderMeta.dataSource])
+  const sourceClassName = renderMeta.dataSource === 'Postgres'
+    ? 'sourceBadge sourceBadgeDb'
+    : 'sourceBadge sourceBadgeFallback'
+
   function resetView() {
     setTimeViewMode('window')
   }
 
   function toggleTimeView() {
     setTimeViewMode((current) => (current === 'window' ? 'update' : 'window'))
+  }
+
+  function getEffectiveRenderParams() {
+    const explicitStart = normalizeDateTimeLocal(startLocal)
+    const explicitEnd = normalizeDateTimeLocal(endLocal)
+
+    if (explicitStart && explicitEnd) {
+      return {
+        startLocal: explicitStart,
+        endLocal: explicitEnd,
+        initialLoadHours: Math.min(3, Math.max(1, Number(initialLoadHours) || DEFAULT_RENDER_HOURS)),
+      }
+    }
+
+    return getRollingRenderWindow(DEFAULT_RENDER_HOURS)
   }
 
   async function loadTakers() {
@@ -291,21 +340,27 @@ function App() {
 
   async function refreshPlot() {
     if (!selectedTaker) return
+    if (renderInFlightRef.current) return
+    renderInFlightRef.current = true
     setIsRendering(true)
     setRenderError('')
     setStatusText('Atualizando...')
+    const requestController = new AbortController()
+    const requestTimeoutMs = 90000
+    const requestTimeoutId = window.setTimeout(() => requestController.abort(), requestTimeoutMs)
     try {
+      const effectiveRenderParams = getEffectiveRenderParams()
       const qs = buildQuery({
         takerId: selectedTaker.id,
         mode,
-        startLocal: normalizeDateTimeLocal(startLocal),
-        endLocal: normalizeDateTimeLocal(endLocal),
-        initialLoadHours,
+        startLocal: effectiveRenderParams.startLocal,
+        endLocal: effectiveRenderParams.endLocal,
+        initialLoadHours: effectiveRenderParams.initialLoadHours,
         background: backgroundIr ? 1 : 0,
         _ts: Date.now(),
       })
 
-      const res = await fetch(`/api/render?${qs}`)
+      const res = await fetch(`/api/render?${qs}`, { signal: requestController.signal })
       if (!res.ok) throw new Error(`Falha ao renderizar (${res.status})`)
       const blob = await res.blob()
       setPlotBlob(blob)
@@ -331,23 +386,16 @@ function App() {
 
       setStatusText('')
     } catch (e) {
-      const message = String(e?.message || e)
+      const message = e?.name === 'AbortError'
+        ? `Render demorou mais que ${Math.floor(requestTimeoutMs / 1000)}s.`
+        : String(e?.message || e)
       setStatusText(message)
       setRenderError(message)
     } finally {
+      window.clearTimeout(requestTimeoutId)
+      renderInFlightRef.current = false
       setIsRendering(false)
     }
-  }
-
-  function _formatLocalIso(dt) {
-    // YYYY-MM-DDTHH:MM:SS
-    const y = dt.getFullYear()
-    const m = String(dt.getMonth() + 1).padStart(2, '0')
-    const d = String(dt.getDate()).padStart(2, '0')
-    const hh = String(dt.getHours()).padStart(2, '0')
-    const mm = String(dt.getMinutes()).padStart(2, '0')
-    const ss = String(dt.getSeconds()).padStart(2, '0')
-    return `${y}-${m}-${d}T${hh}:${mm}:${ss}`
   }
 
   function _buildFrameTimestamps(endLocalStr, hours) {
@@ -360,7 +408,7 @@ function App() {
     const startMs = end.getTime() - (count - 1) * step * 60 * 1000
     for (let i = 0; i < count; i++) {
       const dt = new Date(startMs + i * step * 60 * 1000)
-      stamps.push(_formatLocalIso(dt))
+      stamps.push(formatLocalIso(dt))
     }
     return stamps
   }
@@ -373,7 +421,7 @@ function App() {
       const qs = buildQuery({
         takerId: selectedTaker.id,
         mode,
-        startLocal: _formatLocalIso(start),
+        startLocal: formatLocalIso(start),
         endLocal: ts,
         background: backgroundIr ? 1 : 0,
         initialLoadHours,
@@ -468,12 +516,13 @@ function App() {
       if (animating && frames.length > 0 && frames[frameIndex]?.ts) {
         blob = await fetchFrameForTs(frames[frameIndex].ts, { full: true, hours: animHours })
       } else {
+        const effectiveRenderParams = getEffectiveRenderParams()
         const qs = buildQuery({
           takerId: selectedTaker.id,
           mode,
-          startLocal: normalizeDateTimeLocal(startLocal),
-          endLocal: normalizeDateTimeLocal(endLocal),
-          initialLoadHours,
+          startLocal: effectiveRenderParams.startLocal,
+          endLocal: effectiveRenderParams.endLocal,
+          initialLoadHours: effectiveRenderParams.initialLoadHours,
           background: backgroundIr ? 1 : 0,
           _ts: Date.now(),
         })
@@ -621,6 +670,7 @@ function App() {
             </div>
 
             <div className="plotStage">
+              {plotUrl ? <div className={sourceClassName}>{sourceLabel}</div> : null}
               {plotUrl ? (
                 <img
                   className="plotImg"
@@ -689,6 +739,10 @@ function App() {
               <div className="summaryItem">
                 <span className="summaryLabel">Overlay IR</span>
                 <strong>{renderMeta.background === '1' ? 'Ativo' : backgroundIr ? 'Ativo' : 'Desativado'}</strong>
+              </div>
+              <div className="summaryItem">
+                <span className="summaryLabel">Origem dos dados</span>
+                <strong>{sourceLabel}</strong>
               </div>
               <div className="summaryItem">
                 <span className="summaryLabel">Flashes renderizados</span>
