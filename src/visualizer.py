@@ -68,7 +68,7 @@ class Visualizer:
         try:
             manager = getattr(self.fig.canvas, "manager", None)
             if manager is not None and hasattr(manager, "set_window_title"):
-                manager.set_window_title("Visualizador de Raios")
+                manager.set_window_title("Monitoramento de Raios")
         except Exception:
             pass
         self._cbar = None

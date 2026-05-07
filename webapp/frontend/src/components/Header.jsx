@@ -12,7 +12,7 @@ export default function Header({ onMenuToggle }) {
           </svg>
         </button>
         <img className="lt-header__logo" src="/logo.png" alt="BlueOcean" />
-        <h1 className="lt-header__title">Visualizador de Raios</h1>
+        <h1 className="lt-header__title">Monitoramento de Raios</h1>
       </div>
       <div className="lt-header__right">
         <span className="lt-header__version">Versão: 1.0.0 ({new Date().toLocaleDateString('pt-BR')})</span>

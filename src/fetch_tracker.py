@@ -53,7 +53,7 @@ class FetchTracker:
         except Exception:
             pass
 
-    def get_last_fetched_from_db(self, dsn: str, product_prefix: str) -> Optional[datetime]:
+    def get_last_fetched_from_db(self, dsn: str, product_prefix: str, max_stale_hours: float = 1.0) -> Optional[datetime]:
         try:
             with get_conn(dsn) as conn:
                 cur = conn.cursor()
@@ -68,7 +68,14 @@ class FetchTracker:
                     cur.close()
             if row and row[0] is not None:
                 # pg8000 returns datetime objects in UTC
-                return row[0].replace(tzinfo=timezone.utc) if getattr(row[0], "tzinfo", None) is None else row[0]
+                dt = row[0].replace(tzinfo=timezone.utc) if getattr(row[0], "tzinfo", None) is None else row[0]
+                # Staleness guard: if the DB value is too old, treat as None so the
+                # caller falls back to the initial-window fetch instead of getting
+                # stuck in incremental mode re-downloading already-ingested files.
+                age_hours = (datetime.now(timezone.utc) - dt).total_seconds() / 3600
+                if age_hours > max_stale_hours:
+                    return None
+                return dt
         except Exception:
             return None
         return None

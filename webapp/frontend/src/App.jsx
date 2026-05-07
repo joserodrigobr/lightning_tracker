@@ -183,18 +183,25 @@ function App() {
     }
   }
 
-  async function generateTable() {
+  async function generateTable(period = '24h') {
     if (!selectedTaker) return
     setIsGeneratingTable(true)
     setTableStatus('Gerando tabela...')
     try {
-      const qs = buildQuery({ takerId: selectedTaker.id, endLocal: normalizeDateTimeLocal(endLocal), _ts: Date.now() })
+      const qs = buildQuery({ takerId: selectedTaker.id, endLocal: normalizeDateTimeLocal(endLocal), period, _ts: Date.now() })
       const res = await fetch(`/api/tables/generate?${qs}`)
       if (!res.ok) throw new Error(`Falha ao gerar tabela (${res.status})`)
       const data = await res.json()
       setTableData(data)
-      setTableStatus(`Tabela gerada: ${data?.csvPath || ''}`)
+      setTableStatus(`Tabela gerada com sucesso e download iniciado!`)
       await loadSavedTables()
+
+      const csv = buildTableCsv(data)
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+      const name = selectedTaker?.name || 'taker'
+      const safe = name.trim().replace(/[^A-Za-z0-9]+/g, '_').slice(0, 64)
+      const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+      triggerBrowserDownload(blob, `${safe}_table_${period}_${ts}.csv`)
     } catch (e) {
       setTableStatus(String(e?.message || e))
     } finally {

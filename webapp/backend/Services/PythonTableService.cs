@@ -26,6 +26,7 @@ public sealed class PythonTableService
     public async Task<GeneratedTableResponse> GenerateAsync(
         ServiceTaker taker,
         string? endLocal,
+        string? period,
         CancellationToken cancellationToken
     )
     {
@@ -49,6 +50,12 @@ public sealed class PythonTableService
         {
             args.Add("--end-local");
             args.Add(endLocal!);
+        }
+        
+        if (!string.IsNullOrWhiteSpace(period))
+        {
+            args.Add("--period");
+            args.Add(period!);
         }
 
         var psi = new ProcessStartInfo

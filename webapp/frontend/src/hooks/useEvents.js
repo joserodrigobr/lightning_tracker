@@ -69,6 +69,8 @@ export function useEvents({ takerId, taker, mode, startLocal, endLocal, initialL
       setStats({ total: arr.length, last5min: last5, byRing: rings })
     } catch (e) {
       setError(String(e?.message || e))
+      setEvents([])
+      setStats({ total: 0, last5min: 0, byRing: [0, 0, 0, 0] })
     } finally {
       inFlight.current = false
       setLoading(false)

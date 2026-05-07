@@ -95,20 +95,70 @@ def _download_flashes(settings, start_utc: datetime, end_utc: datetime) -> pd.Da
     return pd.concat(flashes, ignore_index=True)
 
 
-def build_table_result(*, settings_path: Path, taker_id: int, taker_name: str, lat0: float, lon0: float, end_local: datetime) -> TableGenerationResult:
+def build_custom_table(flashes_df: pd.DataFrame, lat0: float, lon0: float, radii_km: list[float], start_local: datetime, end_local: datetime) -> tuple[np.ndarray, list[str]]:
+    total_minutes = int((end_local - start_local).total_seconds() / 60)
+    num_bins = total_minutes // 5
+    if num_bins <= 0:
+        return np.zeros((4, 0), dtype=np.int64), []
+        
+    table = np.zeros((4, num_bins), dtype=np.int64)
+    labels = [(start_local + timedelta(minutes=5 * i)).strftime("%H:%M") for i in range(num_bins)]
+    
+    if flashes_df.empty:
+        return table, labels
+        
+    from .core import haversine_km, ring_index
+    df = flashes_df.copy()
+    tloc = df["time"].dt.tz_convert(start_local.tzinfo)
+    mask = (tloc >= start_local) & (tloc < end_local)
+    df = df[mask].copy()
+    if df.empty:
+        return table, labels
+        
+    dist = haversine_km(lat0, lon0, df["lat"].to_numpy(), df["lon"].to_numpy())
+    r_idx = ring_index(dist, radii_km)
+    within = r_idx < len(radii_km)
+    df = df[within].copy()
+    if df.empty:
+        return table, labels
+    df["ring"] = r_idx[within]
+    
+    delta_min = (df["time"].dt.tz_convert(start_local.tzinfo) - start_local).dt.total_seconds() / 60
+    bin_idx = (delta_min // 5).astype(int)
+    df["bin"] = bin_idx
+    valid_bins = (df["bin"] >= 0) & (df["bin"] < num_bins)
+    df = df[valid_bins]
+    
+    for ring in range(4):
+        sub = df[df["ring"] == ring]
+        counts = sub.groupby("bin").size()
+        for b, count in counts.items():
+            table[ring, b] = count
+            
+    return table, labels
+
+def build_table_result(*, settings_path: Path, taker_id: int, taker_name: str, lat0: float, lon0: float, end_local: datetime, period: str) -> TableGenerationResult:
     settings = load_settings(settings_path)
 
+    if period == "yesterday":
+        local_midnight_today = end_local.replace(hour=0, minute=0, second=0, microsecond=0)
+        start_local = local_midnight_today - timedelta(days=1)
+        end_local_period = local_midnight_today
+    elif period == "3h":
+        start_local = end_local - timedelta(hours=3)
+        end_local_period = end_local
+    else:
+        # Default full day for the given date
+        start_local = end_local.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_local_period = start_local + timedelta(days=1)
+
+    start_utc = _to_utc(start_local)
     lag = timedelta(seconds=int(settings.aws_availability_lag_sec))
-    end_utc = min(_to_utc(end_local), datetime.now(timezone.utc) - lag)
-    # Anchor to local date midnight
-    local_midnight = end_local.replace(hour=0, minute=0, second=0, microsecond=0)
-    start_utc = _to_utc(local_midnight)
+    end_utc = min(_to_utc(end_local_period), datetime.now(timezone.utc) - lag)
 
     flashes_df = _download_flashes(settings, start_utc, end_utc)
-    # Use 5-minute bins anchored to the local date (00:00..23:55)
-    table_4x5min = compute_table_4x5min(flashes_df, lat0=lat0, lon0=lon0, radii_km=settings.radii_km, date_local=end_local)
+    table_4x5min, hour_labels = build_custom_table(flashes_df, lat0, lon0, settings.radii_km, start_local, end_local_period)
 
-    hour_labels = _5min_time_labels_for_date(end_local)
     radii_labels = _radii_labels(settings.radii_km)
 
     archiver = HourlyArchiver(
@@ -120,7 +170,7 @@ def build_table_result(*, settings_path: Path, taker_id: int, taker_name: str, l
     taker_slug = _slug(taker_name)
     csv_path = archiver.save_table_csv(
         table_4x5min,
-        dt_local=end_local,
+        dt_local=end_local_period,
         taker_slug=taker_slug,
         hours_labels=hour_labels,
         radii_labels=radii_labels,
@@ -155,7 +205,7 @@ def build_table_result(*, settings_path: Path, taker_id: int, taker_name: str, l
         csv_path=str(csv_path),
         csv_relative_path=rel_path,
         saved_at_local=end_local.strftime("%Y-%m-%d %H:%M:%S"),
-        end_local=end_local.strftime("%Y-%m-%d %H:%M:%S"),
+        end_local=end_local_period.strftime("%Y-%m-%d %H:%M:%S"),
         hour_labels=hour_labels,
         radii_labels=radii_labels,
         values_4x24=table_4x5min.astype(int).tolist(),
@@ -170,6 +220,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("--lat", required=True, type=float, help="Taker latitude")
     p.add_argument("--lon", required=True, type=float, help="Taker longitude")
     p.add_argument("--end-local", default="", help="End local (YYYY-MM-DDTHH:MM:SS) or empty")
+    p.add_argument("--period", default="24h", help="Period (24h, yesterday, 3h)")
     return p
 
 
@@ -187,6 +238,7 @@ def main() -> int:
         lat0=float(args.lat),
         lon0=float(args.lon),
         end_local=end_local,
+        period=args.period,
     )
 
     payload = {

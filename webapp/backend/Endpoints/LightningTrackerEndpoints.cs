@@ -222,6 +222,7 @@ public static class LightningTrackerEndpoints
         });
 
         app.MapGet("/api/tables/generate", async (
+            HttpRequest request,
             int takerId,
             string? endLocal,
             ServiceTakerRepository repo,
@@ -229,11 +230,12 @@ public static class LightningTrackerEndpoints
             CancellationToken ct
         ) =>
         {
+            var period = GetStringQuery(request, "period");
             var taker = await repo.GetByIdAsync(takerId, ct);
             if (taker is null)
                 return Results.NotFound(new { message = "Tomador não encontrado" });
 
-            var result = await tableService.GenerateAsync(taker, endLocal, ct);
+            var result = await tableService.GenerateAsync(taker, endLocal, period, ct);
             return Results.Json(result);
         });
 

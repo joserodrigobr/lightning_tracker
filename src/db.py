@@ -133,18 +133,26 @@ def insert_events(conn, events: Iterable[Dict[str, Any]], raw_file_id: Optional[
         attributes = json.dumps({k: v for k, v in ev.items() if k not in ("latitude", "longitude", "event_time", "intensity")})
         rows.append((raw_file_id, kind, event_time, lon, lat, lat, lon, intensity, attributes))
 
-    cur = conn.cursor()
-    try:
-        cur.executemany(
-            """
-            insert into lightning_events
-              (raw_file_id, kind, event_time, geom, latitude, longitude, intensity, attributes)
-            values (%s, %s, %s, ST_SetSRID(ST_MakePoint(%s, %s),4326), %s, %s, %s, %s)
-        """,
-            rows,
+    if not rows:
+        return 0
+
+    _CHUNK = 500
+    for i in range(0, len(rows), _CHUNK):
+        chunk = rows[i:i + _CHUNK]
+        placeholders = ",".join(
+            ["(%s,%s,%s,ST_SetSRID(ST_MakePoint(%s,%s),4326),%s,%s,%s,%s)"] * len(chunk)
         )
-    finally:
-        cur.close()
+        flat_params = [v for r in chunk for v in r]
+        cur = conn.cursor()
+        try:
+            cur.execute(
+                f"INSERT INTO lightning_events"
+                f" (raw_file_id,kind,event_time,geom,latitude,longitude,intensity,attributes)"
+                f" VALUES {placeholders}",
+                flat_params,
+            )
+        finally:
+            cur.close()
     conn.commit()
     return len(rows)
 

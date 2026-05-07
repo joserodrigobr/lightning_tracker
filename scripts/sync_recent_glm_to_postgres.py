@@ -95,15 +95,14 @@ def _ingest_file(conn, nc_path: Path, logger, bucket: str) -> tuple[bool, int, i
             "kind": "event",
         })
 
-    with nc_path.open("rb") as f:
-        blob = f.read()
-
+    # We only need metadata (source_url, source_time) in raw_files — not the binary blob.
+    # Storing full NetCDF blobs (~300 KB each) in Postgres makes ingestion 50-100x slower.
     raw_id = db.store_raw_file(
         conn,
         source_url=source_url,
         source_time=source_time,
         file_format="NetCDF4",
-        blob=blob,
+        blob=b"",
         bbox=None,
     )
 
@@ -152,7 +151,8 @@ def main() -> int:
 
     if last_fetched is None:
         # First run: fetch initial window (combine configured initial and CLI lookback)
-        initial_minutes = int(getattr(settings, "fetch_initial_minutes", 5))
+        initial_hours = getattr(settings, "fetch_initial_hours", 3)
+        initial_minutes = int(initial_hours) * 60
         refresh_minutes = max(initial_minutes, lookback_minutes)
         start_utc = now_utc - timedelta(minutes=refresh_minutes)
     else:
@@ -194,6 +194,11 @@ def main() -> int:
                 total_events += events_count
             except Exception as exc:
                 logger.error("Failed to ingest %s: %s", path.name, exc)
+                # Roll back the aborted transaction so subsequent files can proceed
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
 
         deleted = db.delete_raw_files_older_than(conn, retention_cutoff)
 

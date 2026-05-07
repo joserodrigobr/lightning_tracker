@@ -25,32 +25,32 @@ export default function SideMenu({
         </div>
 
         <div className="lt-menu__section">
-          <h3 className="lt-menu__section-title">Download CSV</h3>
+          <h3 className="lt-menu__section-title">Gerar & Download CSV</h3>
           <ul className="lt-menu__list">
             <li>
-              <button className="lt-menu__item" onClick={() => onDownloadCsv('yesterday')}>
-                Ontem
+              <button 
+                className="lt-menu__item" 
+                onClick={() => onGenerateTable('yesterday')}
+                disabled={!selectedTaker || isGeneratingTable}
+              >
+                {isGeneratingTable ? 'Gerando...' : 'Ontem'}
               </button>
             </li>
             <li>
-              <button className="lt-menu__item" onClick={() => onDownloadCsv('last3h')}>
-                Últimas 3h
+              <button 
+                className="lt-menu__item" 
+                onClick={() => onGenerateTable('3h')}
+                disabled={!selectedTaker || isGeneratingTable}
+              >
+                {isGeneratingTable ? 'Gerando...' : 'Últimas 3 horas'}
               </button>
             </li>
           </ul>
+          {tableStatus && <div className="lt-menu__status" style={{marginTop: '10px'}}>{tableStatus}</div>}
         </div>
 
         <div className="lt-menu__section">
-          <h3 className="lt-menu__section-title">Tabelas Salvas</h3>
-          <button
-            className="lt-menu__generate-btn"
-            onClick={onGenerateTable}
-            disabled={!selectedTaker || isGeneratingTable}
-          >
-            {isGeneratingTable ? 'Gerando...' : 'Gerar Nova Tabela'}
-          </button>
-
-          {tableStatus && <div className="lt-menu__status">{tableStatus}</div>}
+          <h3 className="lt-menu__section-title">Tabelas Salvas Anteriormente</h3>
 
           {savedTables.length > 0 ? (
             <ul className="lt-menu__list">
