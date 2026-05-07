@@ -1,18 +1,27 @@
 import './ControlPanel.css'
 
-const ANIM_INTERVALS = [
+const MARKER_INTERVALS = [
+  { value: 1, label: '1 minuto' },
+  { value: 5, label: '5 minutos' },
+  { value: 10, label: '10 minutos' },
+  { value: 20, label: '20 minutos' },
   { value: 30, label: '30 minutos' },
-  { value: 60, label: '1 hora' },
-  { value: 120, label: '2 horas' },
-  { value: 180, label: '3 horas' },
+  { value: 60, label: '60 minutos' },
+]
+
+const VIS_MODES = [
+  { value: 'points', label: 'Pontos (Flashes)' },
+  { value: 'density', label: 'Densidade (Flash/km²)' },
 ]
 
 export default function ControlPanel({
   takers,
   takerId,
   onTakerChange,
-  animHours,
-  onAnimHoursChange,
+  markerInterval,
+  onMarkerIntervalChange,
+  visMode,
+  onVisModeChange,
   startLocal,
   onStartLocalChange,
   endLocal,
@@ -44,17 +53,33 @@ export default function ControlPanel({
         </select>
       </div>
 
-      {/* Intervalo de Animação */}
+      {/* Intervalo de Marcadores */}
       <div className="lt-ctrl__row">
-        <label className="lt-ctrl__label">Intervalo de Animação</label>
+        <label className="lt-ctrl__label">Intervalo de Marcadores</label>
         <select
           className="lt-ctrl__select"
-          value={animHours * 60}
-          onChange={(e) => onAnimHoursChange(Number(e.target.value) / 60)}
+          value={markerInterval}
+          onChange={(e) => onMarkerIntervalChange(Number(e.target.value))}
         >
-          {ANIM_INTERVALS.map((i) => (
+          {MARKER_INTERVALS.map((i) => (
             <option key={i.value} value={i.value}>
               {i.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Modo de Visualização */}
+      <div className="lt-ctrl__row">
+        <label className="lt-ctrl__label">Modo de Visualização</label>
+        <select
+          className="lt-ctrl__select"
+          value={visMode}
+          onChange={(e) => onVisModeChange(e.target.value)}
+        >
+          {VIS_MODES.map((v) => (
+            <option key={v.value} value={v.value}>
+              {v.label}
             </option>
           ))}
         </select>

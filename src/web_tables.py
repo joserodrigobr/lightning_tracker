@@ -95,14 +95,14 @@ def _download_flashes(settings, start_utc: datetime, end_utc: datetime) -> pd.Da
     return pd.concat(flashes, ignore_index=True)
 
 
-def build_custom_table(flashes_df: pd.DataFrame, lat0: float, lon0: float, radii_km: list[float], start_local: datetime, end_local: datetime) -> tuple[np.ndarray, list[str]]:
+def build_custom_table(flashes_df: pd.DataFrame, lat0: float, lon0: float, radii_km: list[float], start_local: datetime, end_local: datetime, bin_size_min: int = 5) -> tuple[np.ndarray, list[str]]:
     total_minutes = int((end_local - start_local).total_seconds() / 60)
-    num_bins = total_minutes // 5
+    num_bins = total_minutes // bin_size_min
     if num_bins <= 0:
         return np.zeros((4, 0), dtype=np.int64), []
         
     table = np.zeros((4, num_bins), dtype=np.int64)
-    labels = [(start_local + timedelta(minutes=5 * i)).strftime("%H:%M") for i in range(num_bins)]
+    labels = [(start_local + timedelta(minutes=bin_size_min * i)).strftime("%H:%M") for i in range(num_bins)]
     
     if flashes_df.empty:
         return table, labels
@@ -124,20 +124,21 @@ def build_custom_table(flashes_df: pd.DataFrame, lat0: float, lon0: float, radii
     df["ring"] = r_idx[within]
     
     delta_min = (df["time"].dt.tz_convert(start_local.tzinfo) - start_local).dt.total_seconds() / 60
-    bin_idx = (delta_min // 5).astype(int)
+    bin_idx = (delta_min // bin_size_min).astype(int)
     df["bin"] = bin_idx
     valid_bins = (df["bin"] >= 0) & (df["bin"] < num_bins)
     df = df[valid_bins]
     
-    for ring in range(4):
+    for ring in range(len(radii_km)):
         sub = df[df["ring"] == ring]
         counts = sub.groupby("bin").size()
         for b, count in counts.items():
-            table[ring, b] = count
+            if ring < table.shape[0]: # safety
+                table[ring, b] = count
             
     return table, labels
 
-def build_table_result(*, settings_path: Path, taker_id: int, taker_name: str, lat0: float, lon0: float, end_local: datetime, period: str) -> TableGenerationResult:
+def build_table_result(*, settings_path: Path, taker_id: int, taker_name: str, lat0: float, lon0: float, end_local: datetime, period: str, bin_size: int = 5) -> TableGenerationResult:
     settings = load_settings(settings_path)
 
     if period == "yesterday":
@@ -146,6 +147,9 @@ def build_table_result(*, settings_path: Path, taker_id: int, taker_name: str, l
         end_local_period = local_midnight_today
     elif period == "3h":
         start_local = end_local - timedelta(hours=3)
+        end_local_period = end_local
+    elif period == "24h_now":
+        start_local = end_local - timedelta(hours=24)
         end_local_period = end_local
     else:
         # Default full day for the given date
@@ -157,7 +161,7 @@ def build_table_result(*, settings_path: Path, taker_id: int, taker_name: str, l
     end_utc = min(_to_utc(end_local_period), datetime.now(timezone.utc) - lag)
 
     flashes_df = _download_flashes(settings, start_utc, end_utc)
-    table_4x5min, hour_labels = build_custom_table(flashes_df, lat0, lon0, settings.radii_km, start_local, end_local_period)
+    table_4x5min, hour_labels = build_custom_table(flashes_df, lat0, lon0, settings.radii_km, start_local, end_local_period, bin_size_min=bin_size)
 
     radii_labels = _radii_labels(settings.radii_km)
 
@@ -195,6 +199,7 @@ def build_table_result(*, settings_path: Path, taker_id: int, taker_name: str, l
                     "endLocal": end_local.strftime("%Y-%m-%d %H:%M:%S"),
                     "hourLabels": hour_labels,
                     "radiiLabels": radii_labels,
+                    "binSize": bin_size
                 },
             )
         except Exception:
@@ -220,7 +225,8 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("--lat", required=True, type=float, help="Taker latitude")
     p.add_argument("--lon", required=True, type=float, help="Taker longitude")
     p.add_argument("--end-local", default="", help="End local (YYYY-MM-DDTHH:MM:SS) or empty")
-    p.add_argument("--period", default="24h", help="Period (24h, yesterday, 3h)")
+    p.add_argument("--period", default="24h", help="Period (24h, yesterday, 3h, 24h_now)")
+    p.add_argument("--bin-size", type=int, default=5, help="Accumulation bin size in minutes")
     return p
 
 
@@ -239,6 +245,7 @@ def main() -> int:
         lon0=float(args.lon),
         end_local=end_local,
         period=args.period,
+        bin_size=args.bin_size,
     )
 
     payload = {

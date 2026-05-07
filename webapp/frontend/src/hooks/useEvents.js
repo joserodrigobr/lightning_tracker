@@ -49,24 +49,30 @@ export function useEvents({ takerId, taker, mode, startLocal, endLocal, initialL
       const fiveMinAgo = new Date(now.getTime() - 5 * 60 * 1000)
       let last5 = 0
       const rings = [0, 0, 0, 0]
-      const hasTakerLocation = taker && taker.id !== 0
+      const hasTakerLocation = !!taker
 
       for (const ev of arr) {
         const evTime = new Date(ev.eventTime)
-        if (evTime >= fiveMinAgo) last5++
+        const isRecent = evTime >= fiveMinAgo
 
         if (hasTakerLocation) {
           const dist = haversineKm(taker.lat, taker.lon, ev.latitude, ev.longitude)
+          let inAnyRing = false
           for (let i = 0; i < RADII.length; i++) {
             if (dist <= RADII[i]) {
               rings[i]++
+              inAnyRing = true
               break
             }
           }
+          if (isRecent && inAnyRing) last5++
+        } else {
+          if (isRecent) last5++
         }
       }
 
-      setStats({ total: arr.length, last5min: last5, byRing: rings })
+      const statsTotal = hasTakerLocation ? rings.reduce((a, b) => a + b, 0) : arr.length;
+      setStats({ total: statsTotal, last5min: last5, byRing: rings })
     } catch (e) {
       setError(String(e?.message || e))
       setEvents([])

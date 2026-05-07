@@ -8,6 +8,8 @@ import StatsPanel from './components/StatsPanel'
 import SideMenu from './components/SideMenu'
 import { useEvents } from './hooks/useEvents'
 import { useAbiOverlay } from './hooks/useAbiOverlay'
+import DataRequestModal from './components/DataRequestModal'
+import ChartModal from './components/ChartModal'
 
 
 const DEFAULT_RENDER_HOURS = 4
@@ -92,7 +94,8 @@ function App() {
   const [frames, setFrames] = useState([])
   const [frameIndex, setFrameIndex] = useState(0)
   const [isPrefetching, setIsPrefetching] = useState(false)
-  const [animHours, setAnimHours] = useState(1)
+  const [markerInterval, setMarkerInterval] = useState(10)
+  const [visMode, setVisMode] = useState('points')
   const [lastUpdateLocal, setLastUpdateLocal] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -102,6 +105,11 @@ function App() {
   const [tableError, setTableError] = useState('')
   const [isGeneratingTable, setIsGeneratingTable] = useState(false)
   const [savedTables, setSavedTables] = useState([])
+
+  const [dataRequestOpen, setDataRequestOpen] = useState(false)
+  const [chartModalOpen, setChartModalOpen] = useState(false)
+  const [chartData, setChartData] = useState(null)
+  const [chartTitle, setChartTitle] = useState('')
 
   const autoSelectRequestedRef = useRef(false)
 
@@ -203,12 +211,18 @@ function App() {
     }
   }
 
-  async function generateTable(period = '24h') {
+  async function generateTable(period = '24h', binSize = 5) {
     if (!selectedTaker) return
     setIsGeneratingTable(true)
     setTableStatus('Gerando tabela...')
     try {
-      const qs = buildQuery({ takerId: selectedTaker.id, endLocal: normalizeDateTimeLocal(endLocal), period, _ts: Date.now() })
+      const qs = buildQuery({ 
+        takerId: selectedTaker.id, 
+        endLocal: normalizeDateTimeLocal(endLocal), 
+        period, 
+        binSize,
+        _ts: Date.now() 
+      })
       const res = await fetch(`/api/tables/generate?${qs}`)
       if (!res.ok) throw new Error(`Falha ao gerar tabela (${res.status})`)
       const data = await res.json()
@@ -222,6 +236,38 @@ function App() {
       const safe = name.trim().replace(/[^A-Za-z0-9]+/g, '_').slice(0, 64)
       const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
       triggerBrowserDownload(blob, `${safe}_table_${period}_${ts}.csv`)
+    } catch (e) {
+      setTableStatus(String(e?.message || e))
+    } finally {
+      setIsGeneratingTable(false)
+    }
+  }
+
+  async function generateChart(period = '24h', binSize = 5) {
+    if (!selectedTaker) return
+    setIsGeneratingTable(true)
+    setTableStatus('Processando gráfico...')
+    try {
+      const qs = buildQuery({ 
+        takerId: selectedTaker.id, 
+        endLocal: normalizeDateTimeLocal(endLocal), 
+        period, 
+        binSize,
+        _ts: Date.now() 
+      })
+      const res = await fetch(`/api/tables/generate?${qs}`)
+      if (!res.ok) throw new Error(`Falha ao obter dados do gráfico (${res.status})`)
+      const data = await res.json()
+      
+      let title = 'Gráfico de Relâmpagos'
+      if (period === 'yesterday') title = 'Relâmpagos - Ontem (24h)'
+      if (period === '3h') title = 'Relâmpagos - Últimas 3 Horas'
+      if (period === '24h_now') title = 'Relâmpagos - Últimas 24 Horas'
+
+      setChartData(data)
+      setChartTitle(title)
+      setChartModalOpen(true)
+      setTableStatus('')
     } catch (e) {
       setTableStatus(String(e?.message || e))
     } finally {
@@ -369,10 +415,25 @@ function App() {
         tableData={tableData}
         savedTables={savedTables}
         onGenerateTable={generateTable}
+        onGenerateChart={generateChart}
+        onOpenDataRequest={() => setDataRequestOpen(true)}
         onLoadSavedTable={loadSavedTable}
         onDownloadCsv={downloadCurrentTableCsv}
         isGeneratingTable={isGeneratingTable}
         tableStatus={tableStatus}
+      />
+
+      <DataRequestModal
+        isOpen={dataRequestOpen}
+        onClose={() => setDataRequestOpen(false)}
+        selectedTaker={selectedTaker}
+      />
+
+      <ChartModal
+        isOpen={chartModalOpen}
+        onClose={() => setChartModalOpen(false)}
+        data={chartData}
+        title={chartTitle}
       />
 
       <main className="lt-main">
@@ -382,7 +443,7 @@ function App() {
             <LightningMap
               taker={selectedTaker}
               allTakers={takers}
-              showAllTakers={showAllTakers}
+              showAllTakers={String(takerId) === '0'}
               showRings={showRings}
               events={events}
               backgroundIr={backgroundIr}
@@ -393,6 +454,8 @@ function App() {
               abiError={abiError}
               startLocal={startLocal}
               endLocal={endLocal}
+              markerInterval={markerInterval}
+              visMode={visMode}
               animating={animating}
               animFrameTime={animFrameTime}
               onPlay={startAnimation}
@@ -431,9 +494,11 @@ function App() {
           <ControlPanel
             takers={takerOptions}
             takerId={takerId}
-            onTakerChange={(id) => { setTakerId(id); setShowAllTakers(false) }}
-            animHours={animHours}
-            onAnimHoursChange={setAnimHours}
+            onTakerChange={(id) => setTakerId(id)}
+            markerInterval={markerInterval}
+            onMarkerIntervalChange={setMarkerInterval}
+            visMode={visMode}
+            onVisModeChange={setVisMode}
             startLocal={startLocal}
             onStartLocalChange={setStartLocal}
             endLocal={endLocal}
@@ -446,11 +511,13 @@ function App() {
             onShowRingsChange={setShowRings}
           />
 
-          <StatsPanel
-            stats={stats}
-            startLocal={startLocal}
-            endLocal={endLocal}
-          />
+          {selectedTaker && selectedTaker.id !== 0 && (
+            <StatsPanel
+              stats={stats}
+              startLocal={startLocal}
+              endLocal={endLocal}
+            />
+          )}
         </aside>
       </main>
     </div>

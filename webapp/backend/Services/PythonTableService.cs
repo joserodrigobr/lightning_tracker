@@ -27,6 +27,7 @@ public sealed class PythonTableService
         ServiceTaker taker,
         string? endLocal,
         string? period,
+        int binSize,
         CancellationToken cancellationToken
     )
     {
@@ -44,6 +45,8 @@ public sealed class PythonTableService
             taker.Lat.ToString(System.Globalization.CultureInfo.InvariantCulture),
             "--lon",
             taker.Lon.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            "--bin-size",
+            binSize.ToString(System.Globalization.CultureInfo.InvariantCulture)
         };
 
         if (!string.IsNullOrWhiteSpace(endLocal))

@@ -1,17 +1,17 @@
 X-Render-Stage-settings-Ms: 1
 X-Render-Stage-window-Ms: 0
 X-Render-Stage-fetch-window-Ms: 0
-X-Render-Stage-postgres-Ms: 4324
+X-Render-Stage-postgres-Ms: 7897
 X-Render-Stage-data-load-Ms: 0
-X-Render-Stage-filter-Ms: 20
+X-Render-Stage-filter-Ms: 18
 X-Render-Stage-background-Ms: 0
-X-Render-Stage-plot-save-Ms: 130
-X-Last-Update-Local: 10:41:10
-X-Plot-Start-Local: 2026-05-07 06:41:10
-X-Plot-End-Local: 2026-05-07 10:41:10
-X-Image-Time-Local: 2026-05-07 10:38:12
-X-Next-Update-Local: 2026-05-07 10:45:00
-X-Flashes-Count: 21
+X-Render-Stage-plot-save-Ms: 118
+X-Last-Update-Local: 13:10:37
+X-Plot-Start-Local: 2026-05-07 09:10:37
+X-Plot-End-Local: 2026-05-07 13:10:37
+X-Image-Time-Local: 2026-05-07 13:07:38
+X-Next-Update-Local: 2026-05-07 13:15:00
+X-Flashes-Count: 0
 X-Events-Count: 0
 X-Mode: 1
 X-Dynamic-Start: 0
@@ -23,5 +23,5 @@ X-Background-Settings-Enabled: 0
 X-Background-Applied: 0
 X-Background-Reason: not_requested
 X-Debug-BG-Imshow-Executed: 0
-X-Render-Timings: total=4475ms;settings=1ms;window=0ms;fetch_window=0ms;postgres=4324ms;data_load=0ms;filter=20ms;background=0ms;plot_save=130ms
+X-Render-Timings: total=8034ms;settings=1ms;window=0ms;fetch_window=0ms;postgres=7897ms;data_load=0ms;filter=18ms;background=0ms;plot_save=118ms
 X-Data-Source: Postgres

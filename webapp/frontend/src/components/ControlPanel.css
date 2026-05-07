@@ -1,3 +1,16 @@
+.lt-control-panel {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.7) 0%, rgba(15, 23, 42, 0.4) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+
 .lt-ctrl {
   display: flex;
   flex-direction: column;
@@ -15,9 +28,9 @@
 .lt-ctrl__label {
   font-size: 14px;
   font-weight: 700;
-  color: #1a3d4e;
+  color: rgba(255, 255, 255, 0.95);
   white-space: nowrap;
-  min-width: 160px;
+  min-width: 140px;
 }
 
 .lt-ctrl__select,
@@ -25,22 +38,29 @@
   flex: 1;
   min-height: 38px;
   padding: 6px 12px;
-  border: 1.5px solid rgba(21, 96, 130, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
-  background: #ffffff;
-  color: #0d4e6b;
+  background: rgba(15, 23, 42, 0.5); /* Darker base for inputs */
+  color: #ffffff;
   font-size: 13px;
   font-weight: 600;
   text-align: center;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: all 0.2s;
   max-width: 200px;
+}
+
+/* Fix for white dropdown options in some browsers */
+.lt-ctrl__select option {
+  background: #0f172a;
+  color: #fff;
 }
 
 .lt-ctrl__select:focus,
 .lt-ctrl__input:focus {
-  border-color: #33b0d3;
-  box-shadow: 0 0 0 3px rgba(51, 176, 211, 0.15);
+  background: rgba(15, 23, 42, 0.8);
+  border-color: #00e5ff;
+  box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.3);
 }
 
 .lt-ctrl__live-badge {
@@ -52,16 +72,17 @@
   justify-content: center;
   padding: 6px 12px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #33b0d3, #279cc2);
+  background: linear-gradient(135deg, #00c6ff, #0072ff);
   color: #ffffff;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: transform 0.2s, opacity 0.2s;
 }
 
 .lt-ctrl__live-badge:hover {
-  opacity: 0.88;
+  transform: translateY(-1px);
+  filter: brightness(1.1);
 }
 
 /* Toggles row */
@@ -80,7 +101,7 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  color: #1a3d4e;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .lt-ctrl__toggle input[type='checkbox'] {
@@ -91,20 +112,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  border: 2px solid rgba(21, 96, 130, 0.25);
-  background: #ffffff;
-  font-size: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 12px;
   font-weight: 800;
   color: transparent;
   transition: all 0.2s;
 }
 
 .lt-ctrl__check--on {
-  background: linear-gradient(135deg, #33b0d3, #1a8aaa);
-  border-color: #33b0d3;
+  background: linear-gradient(135deg, #00c6ff, #0072ff);
+  border-color: transparent;
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(51, 176, 211, 0.3);
+  box-shadow: 0 0 10px rgba(0, 198, 255, 0.4);
 }

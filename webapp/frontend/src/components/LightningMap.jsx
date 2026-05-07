@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { MapContainer, TileLayer, Circle, CircleMarker, Marker, ImageOverlay, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Circle, CircleMarker, Marker, ImageOverlay, Rectangle, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { jetColor } from '../utils/haversine'
 import './LightningMap.css'
@@ -54,6 +54,8 @@ export default function LightningMap({
   onDownloadAnim,
   lastUpdateLocal,
   initialLoadHours,
+  markerInterval,
+  visMode,
 }) {
   const isSouthAmerica = taker && taker.id === 0
   const center = taker ? [taker.lat, taker.lon] : [-14.0, -52.0]
@@ -151,9 +153,14 @@ export default function LightningMap({
             <Marker key={`marker-${t.id}`} position={[t.lat, t.lon]} icon={takerIcon} />
           ))}
 
-        {/* Lightning events */}
-        {events.map((ev) => {
-          const t = (new Date(ev.eventTime).getTime() - timeRange.min) / (timeRange.max - timeRange.min)
+        {/* Lightning events - Point Mode */}
+        {visMode === 'points' && events.map((ev) => {
+          const eventMs = new Date(ev.eventTime).getTime()
+          const ageMin = Math.max(0, (timeRange.max - eventMs) / 60000)
+          const step = Math.floor(ageMin / (markerInterval || 10))
+          const totalSteps = Math.max(1, (timeRange.max - timeRange.min) / (60000 * (markerInterval || 10)))
+          const t = Math.max(0, 1 - step / totalSteps)
+
           return (
             <CircleMarker
               key={ev.id}
@@ -167,6 +174,45 @@ export default function LightningMap({
             />
           )
         })}
+
+        {/* Lightning Density - Grid Mode (Flash/km²) */}
+        {visMode === 'density' && (() => {
+          const GRID_SIZE = 0.15; // Degrees (~16km cells)
+          const grid = {};
+          let maxCount = 0;
+
+          // Aggregate events into spatial cells
+          events.forEach(ev => {
+            const latIdx = Math.floor(ev.latitude / GRID_SIZE);
+            const lonIdx = Math.floor(ev.longitude / GRID_SIZE);
+            const key = `${latIdx},${lonIdx}`;
+            
+            if (!grid[key]) {
+              grid[key] = { count: 0, lat: latIdx * GRID_SIZE, lon: lonIdx * GRID_SIZE };
+            }
+            grid[key].count++;
+            if (grid[key].count > maxCount) maxCount = grid[key].count;
+          });
+
+          return Object.values(grid).map(cell => {
+            const t = maxCount > 0 ? cell.count / maxCount : 0;
+            const bounds = [
+              [cell.lat, cell.lon],
+              [cell.lat + GRID_SIZE, cell.lon + GRID_SIZE]
+            ];
+            return (
+              <Rectangle
+                key={`grid-${cell.lat}-${cell.lon}`}
+                bounds={bounds}
+                pathOptions={{
+                  color: 'transparent',
+                  fillColor: jetColor(t),
+                  fillOpacity: 0.7
+                }}
+              />
+            );
+          });
+        })()}
       </MapContainer>
 
       {/* Metadata overlay (top center) */}

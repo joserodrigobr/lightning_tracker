@@ -69,8 +69,8 @@ public static class LightningTrackerEndpoints
             if (taker is null)
                 return Results.NotFound(new { message = "Tomador não encontrado" });
 
-            // Also fetch ALL events (not just within 250km of taker)
-            var events = await dataService.GetAllEventsAsync(startUtc, endUtc, kind, 30000, ct);
+            // Fetch events near the taker (250km radius)
+            var events = await dataService.GetEventsAsync(taker, startUtc, endUtc, 250.0, kind, 30000, ct);
             return Results.Json(events);
         });
 
@@ -264,11 +264,14 @@ public static class LightningTrackerEndpoints
         ) =>
         {
             var period = GetStringQuery(request, "period");
+            var binSizeStr = GetStringQuery(request, "binSize");
+            if (!int.TryParse(binSizeStr, out var binSize)) binSize = 5;
+
             var taker = await repo.GetByIdAsync(takerId, ct);
             if (taker is null)
                 return Results.NotFound(new { message = "Tomador não encontrado" });
 
-            var result = await tableService.GenerateAsync(taker, endLocal, period, ct);
+            var result = await tableService.GenerateAsync(taker, endLocal, period, binSize, ct);
             return Results.Json(result);
         });
 
