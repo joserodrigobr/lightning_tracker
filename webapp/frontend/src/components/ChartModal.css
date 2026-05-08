@@ -46,3 +46,34 @@
   color: #666;
   font-style: italic;
 }
+
+.lt-modal__header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.lt-download-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #00e5ff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.lt-download-btn:hover {
+  background: rgba(0, 229, 255, 0.1);
+  border-color: rgba(0, 229, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.lt-download-btn span {
+  font-size: 1rem;
+}

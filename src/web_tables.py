@@ -37,7 +37,8 @@ class TableGenerationResult:
 
 
 def _local_tzinfo() -> timezone:
-    return datetime.now().astimezone().tzinfo or timezone.utc
+    # Force Brazil Time (UTC-3) for consistency across the system
+    return timezone(timedelta(hours=-3))
 
 
 def _parse_local_dt(text: str | None, *, base: datetime) -> datetime:
@@ -157,8 +158,8 @@ def build_table_result(*, settings_path: Path, taker_id: int, taker_name: str, l
         end_local_period = start_local + timedelta(days=1)
 
     start_utc = _to_utc(start_local)
-    lag = timedelta(seconds=int(settings.aws_availability_lag_sec))
-    end_utc = min(_to_utc(end_local_period), datetime.now(timezone.utc) - lag)
+    # No lag for database-based charts to ensure real-time consistency
+    end_utc = _to_utc(end_local_period)
 
     flashes_df = _download_flashes(settings, start_utc, end_utc)
     table_4x5min, hour_labels = build_custom_table(flashes_df, lat0, lon0, settings.radii_km, start_local, end_local_period, bin_size_min=bin_size)

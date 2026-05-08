@@ -25,7 +25,12 @@ export default function DataRequestModal({ isOpen, onClose, selectedTaker }) {
     <div className="lt-modal-overlay">
       <div className="lt-modal">
         <div className="lt-modal__header">
-          <h2 className="lt-modal__title">Solicitar Histórico de Dados</h2>
+          <div>
+            <h2 className="lt-modal__title">Solicitar Histórico de Dados</h2>
+            <p className="lt-modal__description">
+              Esta opção é para a requisição de dados de longo período com prazo de 24h para o retorno em seu e-mail.
+            </p>
+          </div>
           <button className="lt-modal__close" onClick={onClose}>✕</button>
         </div>
         

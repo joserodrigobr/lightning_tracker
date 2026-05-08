@@ -10,6 +10,7 @@ import { useEvents } from './hooks/useEvents'
 import { useAbiOverlay } from './hooks/useAbiOverlay'
 import DataRequestModal from './components/DataRequestModal'
 import ChartModal from './components/ChartModal'
+import TableModal from './components/TableModal'
 
 
 const DEFAULT_RENDER_HOURS = 4
@@ -110,6 +111,9 @@ function App() {
   const [chartModalOpen, setChartModalOpen] = useState(false)
   const [chartData, setChartData] = useState(null)
   const [chartTitle, setChartTitle] = useState('')
+
+  const [tableModalOpen, setTableModalOpen] = useState(false)
+  const [tableTitle, setTableTitle] = useState('')
 
   const autoSelectRequestedRef = useRef(false)
 
@@ -246,16 +250,18 @@ function App() {
       if (!res.ok) throw new Error(`Falha ao carregar tabela (${res.status})`)
       const data = await res.json()
       setTableData(data)
+      setTableTitle(`Tabela: ${data?.fileName || relativePath}`)
+      setTableModalOpen(true)
       setTableStatus(`Tabela carregada: ${data?.fileName || relativePath}`)
     } catch (e) {
       setTableStatus(String(e?.message || e))
     }
   }
 
-  async function generateTable(period = '24h', binSize = 5) {
+  async function generateTable(period = '24h', binSize = 5, isDownload = false) {
     if (!selectedTaker) return
     setIsGeneratingTable(true)
-    setTableStatus('Gerando tabela...')
+    setTableStatus(isDownload ? 'Preparando download...' : 'Gerando tabela...')
     try {
       const qs = buildQuery({ 
         takerId: selectedTaker.id, 
@@ -267,16 +273,27 @@ function App() {
       const res = await fetch(`/api/tables/generate?${qs}`)
       if (!res.ok) throw new Error(`Falha ao gerar tabela (${res.status})`)
       const data = await res.json()
+      
       setTableData(data)
-      setTableStatus(`Tabela gerada com sucesso e download iniciado!`)
       await loadSavedTables()
 
-      const csv = buildTableCsv(data)
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
-      const name = selectedTaker?.name || 'taker'
-      const safe = name.trim().replace(/[^A-Za-z0-9]+/g, '_').slice(0, 64)
-      const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-      triggerBrowserDownload(blob, `${safe}_table_${period}_${ts}.csv`)
+      if (isDownload) {
+        const csv = buildTableCsv(data)
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+        const name = selectedTaker?.name || 'taker'
+        const safe = name.trim().replace(/[^A-Za-z0-9]+/g, '_').slice(0, 64)
+        const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+        triggerBrowserDownload(blob, `${safe}_table_${period}_${ts}.csv`)
+        setTableStatus('Download concluído!')
+      } else {
+        let title = 'Tabela de Dados'
+        if (period === 'yesterday') title = 'Relatório - Ontem (24h)'
+        if (period === '3h') title = 'Relatório - Últimas 3 Horas'
+        
+        setTableTitle(title)
+        setTableModalOpen(true)
+        setTableStatus('Tabela carregada na visualização web!')
+      }
     } catch (e) {
       setTableStatus(String(e?.message || e))
     } finally {
@@ -475,6 +492,13 @@ function App() {
         onClose={() => setChartModalOpen(false)}
         data={chartData}
         title={chartTitle}
+      />
+
+      <TableModal
+        isOpen={tableModalOpen}
+        onClose={() => setTableModalOpen(false)}
+        data={tableData}
+        title={tableTitle}
       />
 
       <main className="lt-main">

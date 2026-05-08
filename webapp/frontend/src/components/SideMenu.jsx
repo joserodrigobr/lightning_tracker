@@ -15,6 +15,12 @@ export default function SideMenu({
   isGeneratingTable,
   tableStatus,
 }) {
+  const [expandedSection, setExpandedSection] = useState(null);
+
+  const toggleSection = (id) => {
+    setExpandedSection(expandedSection === id ? null : id);
+  };
+
   return (
     <>
       {/* Backdrop */}
@@ -27,32 +33,87 @@ export default function SideMenu({
         </div>
 
         <div className="lt-menu__section">
-          <h3 className="lt-menu__section-title">Gerar & Download CSV</h3>
+          <h3 className="lt-menu__section-title">Tabelas</h3>
           <ul className="lt-menu__list">
-            <li>
+            {/* Yesterday Section */}
+            <li className="lt-menu__expandable">
               <button 
-                className="lt-menu__item" 
-                onClick={() => onGenerateTable('yesterday', 5)}
+                className={`lt-menu__item ${expandedSection === 'yesterday' ? 'lt-menu__item--active' : ''}`}
+                onClick={() => toggleSection('yesterday')}
                 disabled={!selectedTaker || isGeneratingTable}
               >
-                {isGeneratingTable ? 'Gerando...' : 'Ontem (24h - 5min)'}
+                {isGeneratingTable && expandedSection === 'yesterday' ? 'Processando...' : 'Ontem (24h - 5min)'}
+                <span className="lt-menu__arrow">{expandedSection === 'yesterday' ? '▼' : '▶'}</span>
               </button>
+              
+              {expandedSection === 'yesterday' && (
+                <div className="lt-menu__sub">
+                  <button className="lt-menu__sub-item" onClick={() => onGenerateTable('yesterday', 5)}>
+                    Visualizar Web
+                  </button>
+                  <button className="lt-menu__sub-item" onClick={() => onGenerateTable('yesterday', 5, true)}>
+                    Baixar CSV
+                  </button>
+                </div>
+              )}
             </li>
-            <li>
+
+            {/* 24h Now Section */}
+            <li className="lt-menu__expandable">
               <button 
-                className="lt-menu__item" 
-                onClick={() => onGenerateTable('3h', 5)}
+                className={`lt-menu__item ${expandedSection === '24h_now' ? 'lt-menu__item--active' : ''}`}
+                onClick={() => toggleSection('24h_now')}
                 disabled={!selectedTaker || isGeneratingTable}
               >
-                {isGeneratingTable ? 'Gerando...' : 'Últimas 3 horas (5min)'}
+                {isGeneratingTable && expandedSection === '24h_now' ? 'Processando...' : 'Últimas 24 horas (5min)'}
+                <span className="lt-menu__arrow">{expandedSection === '24h_now' ? '▼' : '▶'}</span>
               </button>
+              
+              {expandedSection === '24h_now' && (
+                <div className="lt-menu__sub">
+                  <button className="lt-menu__sub-item" onClick={() => onGenerateTable('24h_now', 5)}>
+                    Visualizar Web
+                  </button>
+                  <button className="lt-menu__sub-item" onClick={() => onGenerateTable('24h_now', 5, true)}>
+                    Baixar CSV
+                  </button>
+                </div>
+              )}
+            </li>
+
+            {/* 3h Section */}
+            <li className="lt-menu__expandable">
+              <button 
+                className={`lt-menu__item ${expandedSection === '3h' ? 'lt-menu__item--active' : ''}`}
+                onClick={() => toggleSection('3h')}
+                disabled={!selectedTaker || isGeneratingTable}
+              >
+                {isGeneratingTable && expandedSection === '3h' ? 'Processando...' : 'Últimas 3 horas (5min)'}
+                <span className="lt-menu__arrow">{expandedSection === '3h' ? '▼' : '▶'}</span>
+              </button>
+              
+              {expandedSection === '3h' && (
+                <div className="lt-menu__sub">
+                  <button className="lt-menu__sub-item" onClick={() => onGenerateTable('3h', 5)}>
+                    Visualizar Web
+                  </button>
+                  <button className="lt-menu__sub-item" onClick={() => onGenerateTable('3h', 5, true)}>
+                    Baixar CSV
+                  </button>
+                </div>
+              )}
             </li>
           </ul>
+          
+          <p className="lt-menu__note">
+            * Solicitação de dados de mais de 1 dia atrás deve ser feita via <b>Serviços Adicionais</b>.
+          </p>
+
           {tableStatus && <div className="lt-menu__status" style={{marginTop: '10px'}}>{tableStatus}</div>}
         </div>
 
         <div className="lt-menu__section">
-          <h3 className="lt-menu__section-title">Gerar Gráficos</h3>
+          <h3 className="lt-menu__section-title">Gráficos</h3>
           <ul className="lt-menu__list">
             <li>
               <button 
@@ -99,7 +160,7 @@ export default function SideMenu({
         </div>
 
         <div className="lt-menu__section">
-          <h3 className="lt-menu__section-title">Tabelas Salvas Anteriormente</h3>
+          <h3 className="lt-menu__section-title">Tabelas Recentes</h3>
 
           {savedTables.length > 0 ? (
             <ul className="lt-menu__list">

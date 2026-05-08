@@ -202,7 +202,7 @@ Entraremos em contato com mais atualizações."
             var smtpHost = "smtp.office365.com";         // Servidor Office 365 / Microsoft
             var smtpPort = 587;                          // Porta para STARTTLS
             var smtpUser = "samuel.amorim@BRBlueocean.com"; // Seu e-mail corporativo
-            var smtpPass = "P&593209307730ay";           // Senha de Aplicativo ou senha da conta
+//            var smtpPass = "P&593209307730ay";           // Senha de Aplicativo ou senha da conta
 
             using var client = new SmtpClient(smtpHost, smtpPort)
             {
