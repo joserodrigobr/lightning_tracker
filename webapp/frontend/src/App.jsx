@@ -171,15 +171,56 @@ function App() {
   }
 
   async function loadDefaultTaker() {
-    if (autoSelectRequestedRef.current || takerId) return
+    if (autoSelectRequestedRef.current || (takerId && takerId !== '0')) return
     autoSelectRequestedRef.current = true
+
     try {
-      const res = await fetch('/api/takers/active')
-      if (!res.ok) throw new Error(`Falha ao calcular tomador ativo (${res.status})`)
+      // 1. Try to get user location for proximity auto-selection with 5s timeout
+      if ("geolocation" in navigator) {
+        const geoTimeout = setTimeout(() => {
+          console.warn("Geolocalização excedeu 5s. Usando padrão.");
+          loadFallbackTaker();
+        }, 5000);
+
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          clearTimeout(geoTimeout);
+          const { latitude, longitude } = position.coords;
+          
+          let closest = null;
+          let minDistance = Infinity;
+
+          takers.forEach(t => {
+            const dist = Math.sqrt(Math.pow(t.lat - latitude, 2) + Math.pow(t.lon - longitude, 2));
+            if (dist < minDistance) {
+              minDistance = dist;
+              closest = t;
+            }
+          });
+
+          if (closest) {
+            console.log(`Auto-selecionado por proximidade: ${closest.name}`);
+            setTakerId(String(closest.id));
+            return;
+          }
+        }, () => {
+          console.warn("Geolocalização negada ou falhou. Usando padrão.");
+          loadFallbackTaker();
+        });
+      } else {
+        loadFallbackTaker();
+      }
+    } catch (err) {
+      console.error('Falha ao carregar geolocalização:', err)
+    }
+  }
+
+  async function loadFallbackTaker() {
+    const res = await fetch('/api/active-taker')
+    if (res.ok) {
       const data = await res.json()
       if (data?.takerId) setTakerId(String(data.takerId))
-    } catch {
-      if (takers.length > 0 && !takerId) setTakerId(String(takers[0].id))
+    } else if (takers.length > 0) {
+      setTakerId(String(takers[0].id))
     }
   }
 

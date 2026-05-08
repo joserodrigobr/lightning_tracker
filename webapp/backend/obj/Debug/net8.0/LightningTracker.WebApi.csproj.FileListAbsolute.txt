@@ -181,3 +181,4 @@ C:\Users\samue\OneDrive\Área de Trabalho\blueocean\deteccao_relampagos\lightnin
 C:\Users\samue\OneDrive\Área de Trabalho\blueocean\deteccao_relampagos\lightning_tracker\webapp\backend\bin\Debug\net8.0\obj_validate\Debug\net8.0\LightningTracker.WebApi.sourcelink.json
 C:\Users\samue\OneDrive\Área de Trabalho\blueocean\deteccao_relampagos\lightning_tracker\webapp\backend\bin\Debug\net8.0\obj_validate\LightningTracker.WebApi.csproj.nuget.dgspec.json
 C:\Users\samue\OneDrive\Área de Trabalho\blueocean\deteccao_relampagos\lightning_tracker\webapp\backend\bin\Debug\net8.0\obj_validate\project.assets.json
+C:\Users\samue\OneDrive\Área de Trabalho\blueocean\deteccao_relampagos\lightning_tracker\webapp\backend\bin\Debug\net8.0\db\alert_contacts.json

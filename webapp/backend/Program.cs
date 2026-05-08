@@ -1,6 +1,7 @@
 using LightningTracker.WebApi.Data;
 using LightningTracker.WebApi.Endpoints;
 using LightningTracker.WebApi.Services;
+using LightningTracker.WebApi.Workers;
 using System.Text;
 
 // Ensure UTF-8 encoding for non-ASCII paths and I/O
@@ -20,6 +21,7 @@ builder.Services.AddSingleton<PythonBackgroundService>();
 builder.Services.AddSingleton<PythonAbiService>();
 builder.Services.AddSingleton<LightningDataService>();
 builder.Services.AddHostedService<GlmSyncHostedService>();
+builder.Services.AddHostedService<LightningAlertWorker>();
 
 var app = builder.Build();
 

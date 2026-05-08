@@ -75,10 +75,10 @@ export default function SideMenu({
             <li>
               <button 
                 className="lt-menu__item" 
-                onClick={() => onGenerateChart('3h', 1)}
+                onClick={() => onGenerateChart('3h', 5)}
                 disabled={!selectedTaker || isGeneratingTable}
               >
-                Últimas 3 horas (1min)
+                Últimas 3 horas (5min)
               </button>
             </li>
           </ul>

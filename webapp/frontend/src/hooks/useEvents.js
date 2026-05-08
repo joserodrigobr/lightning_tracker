@@ -95,5 +95,24 @@ export function useEvents({ takerId, taker, mode, startLocal, endLocal, initialL
     return () => clearInterval(id)
   }, [fetchEvents, takerId, taker, refreshIntervalMs])
 
+  const prevTotalRef = useRef(0)
+  const audioRef = useRef(new Audio('/alert.mp3'))
+
+  useEffect(() => {
+    const delta = stats.total - prevTotalRef.current
+    if (taker && taker.id !== 0 && delta > 0) {
+      // If we have new flashes, play a burst of sounds (limited to 5 for sanity)
+      const burstCount = Math.min(delta, 5)
+      for (let i = 0; i < burstCount; i++) {
+        setTimeout(() => {
+          const sound = audioRef.current.cloneNode(true)
+          sound.volume = 0.6
+          sound.play().catch(e => console.warn("Audio play blocked:", e))
+        }, i * 150)
+      }
+    }
+    prevTotalRef.current = stats.total
+  }, [stats.total, taker])
+
   return { events, loading, error, stats, refetch: fetchEvents }
 }
