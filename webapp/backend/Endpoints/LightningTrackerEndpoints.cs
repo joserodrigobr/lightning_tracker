@@ -1,6 +1,7 @@
 using System.Web;
 using LightningTracker.WebApi.Data;
 using LightningTracker.WebApi.Services;
+using LightningTracker.WebApi.Models;
 
 namespace LightningTracker.WebApi.Endpoints;
 
@@ -372,7 +373,113 @@ public static class LightningTrackerEndpoints
                 : Results.Json(result);
         });
 
+        // ── Pending & Active Alerts (Sentinela Operations) ──────────────────
+        app.MapGet("/api/alerts/pending", async (PendingAlertRepository repo, CancellationToken ct) =>
+        {
+            var alerts = await repo.GetPendingAsync(ct);
+            return Results.Json(alerts);
+        });
+
+        app.MapGet("/api/alerts/active", async (PendingAlertRepository repo, CancellationToken ct) =>
+        {
+            var alerts = await repo.GetActiveAsync(ct);
+            return Results.Json(alerts);
+        });
+
+        app.MapPost("/api/alerts/{id}/approve", async (Guid id, int? duration, PendingAlertRepository repo, WhatsAppService wa, CancellationToken ct) =>
+        {
+            var alert = await repo.GetByIdAsync(id, ct);
+            if (alert == null || alert.Status != "Pending") return Results.NotFound();
+
+            alert.Status = "Active";
+            alert.DurationMinutes = duration ?? alert.DurationMinutes;
+            alert.SentAt = DateTime.UtcNow;
+
+            // Load contacts and send WhatsApp
+            var takerContacts = await GetTakerContactsAsync(alert.TakerName, ct);
+            if (takerContacts.Any())
+            {
+                var payload = alert.GetPayload();
+                foreach (var contact in takerContacts)
+                {
+                    if (!string.IsNullOrEmpty(contact.Phone))
+                    {
+                        await wa.SendAlertAsync(contact.Phone, contact.Name, alert.TakerName, alert.AlertLevel, payload);
+                    }
+                }
+            }
+
+            await repo.UpdateAlertAsync(alert, ct);
+            return Results.Ok();
+        });
+
+        app.MapPost("/api/alerts/{id}/update", async (Guid id, string? newLevel, int? newDuration, PendingAlertRepository repo, WhatsAppService wa, CancellationToken ct) =>
+        {
+            var alert = await repo.GetByIdAsync(id, ct);
+            if (alert == null || alert.Status != "Active") return Results.NotFound();
+
+            if (!string.IsNullOrEmpty(newLevel)) alert.AlertLevel = newLevel;
+            if (newDuration.HasValue) alert.DurationMinutes = newDuration.Value;
+            alert.SentAt = DateTime.UtcNow;
+
+            var takerContacts = await GetTakerContactsAsync(alert.TakerName, ct);
+            if (takerContacts.Any())
+            {
+                var payload = alert.GetPayload();
+                foreach (var contact in takerContacts)
+                {
+                    if (!string.IsNullOrEmpty(contact.Phone))
+                    {
+                        await wa.SendUpdateAsync(contact.Phone, contact.Name, alert.TakerName, alert.AlertLevel, alert.DurationMinutes, payload);
+                    }
+                }
+            }
+
+            await repo.UpdateAlertAsync(alert, ct);
+            return Results.Ok();
+        });
+
+        app.MapPost("/api/alerts/{id}/close", async (Guid id, PendingAlertRepository repo, WhatsAppService wa, CancellationToken ct) =>
+        {
+            var alert = await repo.GetByIdAsync(id, ct);
+            if (alert == null || alert.Status != "Active") return Results.NotFound();
+
+            alert.Status = "Resolved";
+            alert.SentAt = DateTime.UtcNow;
+
+            var takerContacts = await GetTakerContactsAsync(alert.TakerName, ct);
+            if (takerContacts.Any())
+            {
+                foreach (var contact in takerContacts)
+                {
+                    if (!string.IsNullOrEmpty(contact.Phone))
+                    {
+                        await wa.SendResolvedAsync(contact.Phone, contact.Name, alert.TakerName);
+                    }
+                }
+            }
+
+            await repo.UpdateAlertAsync(alert, ct);
+            return Results.Ok();
+        });
+
+        app.MapPost("/api/alerts/{id}/reject", async (Guid id, PendingAlertRepository repo, CancellationToken ct) =>
+        {
+            await repo.UpdateStatusAsync(id, "Rejected", ct);
+            return Results.Ok();
+        });
+
         return app;
+    }
+
+    private static async Task<List<AlertContact>> GetTakerContactsAsync(string takerName, CancellationToken ct)
+    {
+        var contactsPath = Path.Combine(Directory.GetCurrentDirectory(), "db/alert_contacts.json");
+        if (!File.Exists(contactsPath)) return new List<AlertContact>();
+        
+        var json = await File.ReadAllTextAsync(contactsPath, ct);
+        var contacts = System.Text.Json.JsonSerializer.Deserialize<List<AlertContact>>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        return contacts?.Where(c => c.UnitName.Equals(takerName, StringComparison.OrdinalIgnoreCase)).ToList() ?? new List<AlertContact>();
     }
 
     private static int GetIntQuery(HttpRequest request, string key, int defaultValue = 0)

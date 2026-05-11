@@ -12,6 +12,7 @@ import { useAbiOverlay } from './hooks/useAbiOverlay'
 import DataRequestModal from './components/DataRequestModal'
 import ChartModal from './components/ChartModal'
 import TableModal from './components/TableModal'
+import AlertDashboard from './components/AlertDashboard'
 
 
 const DEFAULT_RENDER_HOURS = 4
@@ -91,11 +92,13 @@ function App() {
   const [showMap, setShowMap] = useState(true)
   const [showRings, setShowRings] = useState(true)
   const [showAllTakers, setShowAllTakers] = useState(true)
+  const [showNowcast, setShowNowcast] = useState(false)
 
   const [markerInterval, setMarkerInterval] = useState(10)
   const [visMode, setVisMode] = useState('points')
   const [lastUpdateLocal, setLastUpdateLocal] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [view, setView] = useState('map') // 'map' or 'alerts'
 
   // Table state (preserved from original)
   const [tableData, setTableData] = useState(null)
@@ -379,6 +382,7 @@ function App() {
     setMarkerInterval(10)
     setAccumulatedMode(true)
     setBackgroundIr(false)
+    setShowNowcast(false)
   }
 
   async function downloadCurrentImage() {
@@ -497,6 +501,8 @@ function App() {
         onDownloadCsv={downloadCurrentTableCsv}
         isGeneratingTable={isGeneratingTable}
         tableStatus={tableStatus}
+        view={view}
+        onViewChange={setView}
       />
 
       <DataRequestModal
@@ -520,94 +526,103 @@ function App() {
       />
 
       <main className="lt-main">
-        {/* Map column */}
-        <div className="lt-map-col">
-          {showMap && (selectedTaker || String(takerId) === '0') ? (
-            <LightningMap
-              taker={selectedTaker}
-              allTakers={takers}
-              showAllTakers={String(takerId) === '0'}
-              showRings={showRings}
-              events={events}
-              backgroundIr={backgroundIr}
-              abiUrl={abiUrl}
-              abiBounds={abiBounds}
-              abiUtc={abiUtc}
-              abiLoading={abiLoading}
-              abiError={abiError}
-              startLocal={startLocal}
-              endLocal={endLocal}
-              markerInterval={markerInterval}
-              visMode={visMode}
-              animating={animating}
-              playbackTime={playbackTime}
-              accumulatedMode={accumulatedMode}
-              onPlay={startAnimation}
-              onPause={stopAnimation}
-              onStepBack={stepBack}
-              onStepForward={stepForward}
-              onDownloadImage={downloadCurrentImage}
-              onDownloadAnim={downloadAnimation}
-              lastUpdateLocal={lastUpdateLocal}
-              initialLoadHours={initialLoadHours}
-              nowcast={nowcast}
-            />
-          ) : (
-            <div className="lt-info-badge">
-              {takersError || (takers.length === 0 ? 'Carregando tomadores...' : 'Selecione um tomador de serviço')}
+        {view === 'alerts' ? (
+          <AlertDashboard />
+        ) : (
+          <>
+            {/* Map column */}
+            <div className="lt-map-col">
+              {showMap && (selectedTaker || String(takerId) === '0') ? (
+                <LightningMap
+                  taker={selectedTaker}
+                  allTakers={takers}
+                  showAllTakers={String(takerId) === '0'}
+                  showRings={showRings}
+                  events={events}
+                  backgroundIr={backgroundIr}
+                  abiUrl={abiUrl}
+                  abiBounds={abiBounds}
+                  abiUtc={abiUtc}
+                  abiLoading={abiLoading}
+                  abiError={abiError}
+                  startLocal={startLocal}
+                  endLocal={endLocal}
+                  markerInterval={markerInterval}
+                  visMode={visMode}
+                  animating={animating}
+                  playbackTime={playbackTime}
+                  accumulatedMode={accumulatedMode}
+                  onPlay={startAnimation}
+                  onPause={stopAnimation}
+                  onStepBack={stepBack}
+                  onStepForward={stepForward}
+                  onDownloadImage={downloadCurrentImage}
+                  onDownloadAnim={downloadAnimation}
+                  lastUpdateLocal={lastUpdateLocal}
+                  initialLoadHours={initialLoadHours}
+                  nowcast={nowcast}
+                  showNowcast={showNowcast}
+                />
+              ) : (
+                <div className="lt-info-badge">
+                  {takersError || (takers.length === 0 ? 'Carregando tomadores...' : 'Selecione um tomador de serviço')}
+                </div>
+              )}
+
+              {eventsLoading && selectedTaker && (
+                <div className="lt-info-badge" style={{ top: '60%' }}>
+                  Carregando eventos...
+                </div>
+              )}
+
+              {!eventsLoading && selectedTaker && events.length === 0 && (
+                <div className="lt-info-badge lt-info-badge--warn" style={{ top: '60%' }}>
+                  Nenhum relâmpago encontrado no período selecionado
+                  <small style={{ display: 'block', marginTop: 6, opacity: 0.8, fontSize: 12 }}>
+                    Tente aumentar o intervalo de tempo
+                  </small>
+                </div>
+              )}
             </div>
-          )}
 
-          {eventsLoading && selectedTaker && (
-            <div className="lt-info-badge" style={{ top: '60%' }}>
-              Carregando eventos...
-            </div>
-          )}
+            {/* Sidebar */}
+            <aside className="lt-sidebar">
+              <ControlPanel
+                takers={takerOptions}
+                takerId={takerId}
+                onTakerChange={(id) => setTakerId(id)}
+                markerInterval={markerInterval}
+                onMarkerIntervalChange={setMarkerInterval}
+                visMode={visMode}
+                onVisModeChange={setVisMode}
+                startLocal={startLocal}
+                onStartLocalChange={setStartLocal}
+                endLocal={endLocal}
+                onEndLocalChange={setEndLocal}
+                backgroundIr={backgroundIr}
+                onBackgroundIrChange={setBackgroundIr}
+                showMap={showMap}
+                onShowMapChange={setShowMap}
+                showRings={showRings}
+                onShowRingsChange={setShowRings}
+                accumulatedMode={accumulatedMode}
+                onAccumulatedModeChange={setAccumulatedMode}
+                showNowcast={showNowcast}
+                onShowNowcastChange={setShowNowcast}
+                onReset={resetFilters}
+                animating={animating}
+              />
 
-          {!eventsLoading && selectedTaker && events.length === 0 && (
-            <div className="lt-info-badge lt-info-badge--warn" style={{ top: '60%' }}>
-              Nenhum relâmpago encontrado no período selecionado
-              <small style={{ display: 'block', marginTop: 6, opacity: 0.8, fontSize: 12 }}>
-                Tente aumentar o intervalo de tempo
-              </small>
-            </div>
-          )}
-        </div>
-
-        {/* Sidebar */}
-        <aside className="lt-sidebar">
-          <ControlPanel
-            takers={takerOptions}
-            takerId={takerId}
-            onTakerChange={(id) => setTakerId(id)}
-            markerInterval={markerInterval}
-            onMarkerIntervalChange={setMarkerInterval}
-            visMode={visMode}
-            onVisModeChange={setVisMode}
-            startLocal={startLocal}
-            onStartLocalChange={setStartLocal}
-            endLocal={endLocal}
-            onEndLocalChange={setEndLocal}
-            backgroundIr={backgroundIr}
-            onBackgroundIrChange={setBackgroundIr}
-            showMap={showMap}
-            onShowMapChange={setShowMap}
-            showRings={showRings}
-            onShowRingsChange={setShowRings}
-            accumulatedMode={accumulatedMode}
-            onAccumulatedModeChange={setAccumulatedMode}
-            onReset={resetFilters}
-            animating={animating}
-          />
-
-          {selectedTaker && selectedTaker.id !== 0 && (
-            <StatsPanel
-              stats={stats}
-              startLocal={startLocal}
-              endLocal={endLocal}
-            />
-          )}
-        </aside>
+              {selectedTaker && selectedTaker.id !== 0 && (
+                <StatsPanel
+                  stats={stats}
+                  startLocal={startLocal}
+                  endLocal={endLocal}
+                />
+              )}
+            </aside>
+          </>
+        )}
       </main>
     </div>
   )

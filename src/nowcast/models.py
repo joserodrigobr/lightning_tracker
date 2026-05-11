@@ -53,6 +53,8 @@ class CellTrack:
     confidence: float = 0.0              # 0.0–1.0
     missed_frames: int = 0               # Frames without a match
     area_trend_km2_min: float = 0.0      # Area growth/decay rate
+    lightning_jump: bool = False          # True if flash rate jump detected (2σ)
+    flash_rate_sigma: float = 0.0        # Magnitude of flash rate deviation
 
 
 @dataclass
@@ -81,6 +83,8 @@ class ETAResult:
     bearing_deg: float
     bearing_label: str                    # Human-readable: "NE", "SW", etc.
     approaching: bool                     # True if distance is decreasing
+    lightning_jump: bool = False
+    flash_rate_sigma: float = 0.0
 
 
 @dataclass
@@ -97,6 +101,8 @@ class CellReport:
     bearing_label: str
     confidence: float
     status: str
+    lightning_jump: bool = False          # Lightning Jump detected
+    flash_rate_sigma: float = 0.0        # Flash rate sigma value
     projections: list[Projection] = field(default_factory=list)
     hull_lat: list[float] = field(default_factory=list)
     hull_lon: list[float] = field(default_factory=list)

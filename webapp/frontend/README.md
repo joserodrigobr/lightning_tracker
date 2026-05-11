@@ -36,7 +36,8 @@ webapp/frontend/
 │   │   ├── SideMenu.jsx/.css       # Menu lateral (tabelas, gráficos, download)
 │   │   ├── ChartModal.jsx/.css     # Modal de gráficos de barras
 │   │   ├── TableModal.jsx/.css     # Modal de visualização de tabelas
-│   │   └── DataRequestModal.jsx/.css # Modal de requisição de dados
+│   │   ├── DataRequestModal.jsx/.css # Modal de requisição de dados
+│   │   └── AlertDashboard.jsx/.css  # ⭐ Centro de Operações Sentinel (Aprovação de Alertas)
 │   ├── hooks/
 │   │   ├── useEvents.js            # ⭐ Hook de fetch de eventos (polling 60s)
 │   │   └── useAbiOverlay.js        # Hook de overlay ABI IR (polling 10min)
@@ -83,7 +84,12 @@ App.jsx (State Manager)
   - **Anéis de proximidade**: 30/50/100/200 km ao redor do tomador
   - **ABI IR overlay**: Imagem de satélite infravermelha como ImageOverlay
   - **Animação**: Playback temporal com controles play/pause/step
-- Suporta modos: `points` (scatter) e `density` (heatmap)
+### `AlertDashboard.jsx`
+- **Centro de Operações Sentinel** — Interface para meteorologistas.
+- **Fila de Validação**: Exibe alertas pendentes com métricas de impacto, ETA e botões de aprovação/rejeição.
+- **Monitoramento Ativo**: Lista alertas em curso, permitindo estender a duração, alterar o nível ou encerrar manualmente.
+- **Badges de Intensidade**: Sinaliza visualmente ocorrências de **Lightning Jump** e alertas **Auto-Aprovados**.
+- **Polling**: Atualiza automaticamente a cada 10 segundos.
 
 ### `useEvents.js`
 - Polling automático a cada 60s

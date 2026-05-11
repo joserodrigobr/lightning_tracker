@@ -45,11 +45,11 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-FRAME_WINDOW_SEC = 300        # 5-minute window for each frame
-FRAME_STEP_SEC = 60           # 1-minute step between frames (sliding window)
+FRAME_WINDOW_SEC = 600        # 10-minute window for each frame
+FRAME_STEP_SEC = 300           # 5-minute step between frames (optimized for speed)
 LOOKBACK_MINUTES = 30         # Total lookback window
-EPS_KM = 35.0
-MIN_SAMPLES = 5
+EPS_KM = 20.0                 # Isolates individual updrafts / mesoscale-γ cells
+MIN_SAMPLES = 5               # Filters GLM noise / solar artifacts
 
 
 # ---------------------------------------------------------------------------
@@ -169,14 +169,15 @@ def run_nowcast_cycle(
         now_utc = datetime.now(timezone.utc)
 
     start_utc = now_utc - timedelta(minutes=LOOKBACK_MINUTES)
-    events = _load_events_from_postgres(dsn, start_utc, now_utc, kind="flash")
-    if not events:
+    flashes = _load_events_from_postgres(dsn, start_utc, now_utc, kind="flash")
+    events = _load_events_from_postgres(dsn, start_utc, now_utc, kind="event")
+    
+    if not flashes:
         logger.warning("No flash events in the last %d minutes", LOOKBACK_MINUTES)
         return NowcastReport(generated_at_utc=now_utc, frame_count=0)
 
     # ALIGNMENT: Adjust 'now_utc' to the last event time to handle satellite lag.
-    # Otherwise, the last frames would be empty and tracks would "dissipate" before being reported.
-    last_event_time = max(e["event_time"] for e in events)
+    last_event_time = max(e["event_time"] for e in flashes)
     analysis_now = last_event_time
     
     logger.info("Nowcast cycle: %s → %s (Data lag: %s)", 
@@ -187,29 +188,38 @@ def run_nowcast_cycle(
 
     # 2. Build time frames (sliding window) working backwards from analysis_now
     num_frames = int((LOOKBACK_MINUTES * 60 - FRAME_WINDOW_SEC) / FRAME_STEP_SEC) + 1
-    frames = _build_frames(events, analysis_now, num_frames, FRAME_WINDOW_SEC, FRAME_STEP_SEC)
-    logger.info("Built %d frames (sliding window step=%ds)", len(frames), FRAME_STEP_SEC)
+    flash_frames = _build_frames(flashes, analysis_now, num_frames, FRAME_WINDOW_SEC, FRAME_STEP_SEC)
+    event_frames = _build_frames(events, analysis_now, num_frames, FRAME_WINDOW_SEC, FRAME_STEP_SEC)
+    logger.info("Built %d frames (sliding window step=%ds)", len(flash_frames), FRAME_STEP_SEC)
 
     # 3. Detect cells in each frame and track across frames
     tracker = CellTracker(max_match_km=80.0)
 
-    for i, (frame_time, frame_events) in enumerate(frames):
-        if not frame_events:
+    for i in range(len(flash_frames)):
+        frame_time, frame_flashes = flash_frames[i]
+        _, frame_events = event_frames[i]
+
+        if not frame_flashes:
             tracker.update([])
             continue
 
-        lats = np.array([e["latitude"] for e in frame_events])
-        lons = np.array([e["longitude"] for e in frame_events])
+        lats = np.array([e["latitude"] for e in frame_flashes])
+        lons = np.array([e["longitude"] for e in frame_flashes])
+        
+        ev_lats = np.array([e["latitude"] for e in frame_events]) if frame_events else np.array([])
+        ev_lons = np.array([e["longitude"] for e in frame_events]) if frame_events else np.array([])
 
         cells = detect_cells(
             lats, lons, frame_time,
             eps_km=EPS_KM,
             min_samples=MIN_SAMPLES,
             time_window_seconds=FRAME_WINDOW_SEC,
+            event_lats=ev_lats,
+            event_lons=ev_lons
         )
         tracker.update(cells)
-        logger.info("Frame %d/%d (%s): %d events → %d cells",
-                     i + 1, len(frames), frame_time.strftime("%H:%M"), len(frame_events), len(cells))
+        logger.info("Frame %d/%d (%s): %d flashes, %d events → %d cells",
+                     i + 1, len(flash_frames), frame_time.strftime("%H:%M"), len(frame_flashes), len(frame_events), len(cells))
 
     # 4. Get active tracks and generate projections
     active_tracks = tracker.get_active_tracks()
@@ -227,7 +237,7 @@ def run_nowcast_cycle(
 
     return NowcastReport(
         generated_at_utc=now_utc,
-        frame_count=len(frames),
+        frame_count=len(flash_frames),
         cells=cell_reports,
         impacts=impacts,
     )

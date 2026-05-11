@@ -81,6 +81,15 @@ webapp/backend/
 | GET | `/api/tables/latest` | Lista tabelas salvas | `takerId`, `limit` |
 | GET | `/api/tables/load` | Carrega tabela salva | `relativePath` |
 
+### Sentinel (Alertas & Validação)
+| Método | Rota | Descrição | Params |
+|--------|------|-----------|--------|
+| GET | `/api/alerts/pending` | Lista alertas aguardando aprovação | — |
+| GET | `/api/alerts/active` | Lista alertas em monitoramento ativo | — |
+| POST | `/api/alerts/{id}/approve` | Aprova e envia alerta manual | `duration` |
+| POST | `/api/alerts/{id}/update` | Altera nível ou duração de alerta ativo | `newLevel`, `newDuration` |
+| POST | `/api/alerts/{id}/close` | Encerra alerta e envia mensagem "Green" | — |
+
 ---
 
 ## ⚡ Serviços Críticos
@@ -110,26 +119,24 @@ Ciclo: a cada 300s (configurável)
 ```
 
 ### `LightningAlertWorker` (Sentinel)
-Motor de alertas em tempo real via WhatsApp (Z-API).
+Motor de alertas em tempo real com suporte a Nowcast, Tracking e Aprovação Humana.
 
 ```
-Ciclo: a cada 2 minutos
-  1. Para cada tomador com contatos em alert_contacts.json:
-  2. Busca eventos dos últimos 10 min (raio 500km)
-  3. Calcula distância mínima via Haversine
-  4. Determina nível de alerta:
-     🔴 Red:       ≤ 100km  → atualização em tempo real
-     🟡 Yellow:    100-200km → atualização a cada 20min
-     ⚠️ Observing: 200-500km → atualização a cada 60min
-     ✅ Green:     20min sem atividade → encerramento
+Ciclo: a cada 5 minutos
+  1. Invoca Python Nowcast Engine (src.nowcast.engine)
+  2. Identifica impactos previstos (ETA < 30min) para cada tomador
+  3. Determina nível de alerta (Red/Yellow/Observing)
+  4. Lógica de Aprovação:
+     - SE Lightning Jump + Confiança > 80% → AUTO-APPROVE (envio imediato)
+     - CASO CONTRÁRIO → Fila de Validação (Aprovação Manual)
   5. Envia mensagem formatada via Z-API WhatsApp
+  6. Mantém estado na tabela `pending_alerts` (SQLite)
 ```
 
-**Templates de mensagem**:
-- **Observing**: Notificação de tempestade na região
-- **Yellow**: Dados de proximidade + previsão 30min
-- **Red**: Alerta urgente + previsão 15min + instrução de abrigo
-- **Green**: Condições normalizadas
+**Métricas de Decisão**:
+- **Lightning Jump**: Intensificação > 2σ no flash rate (tempestade severa)
+- **Confidence**: Índice de acerto do rastreamento baseado em overlap e custo multi-fator
+- **ETA**: Estimativa de tempo de chegada baseada no vetor de translação da célula
 
 ### `LightningDataService`
 Acesso direto ao PostgreSQL com filtragem espacial.

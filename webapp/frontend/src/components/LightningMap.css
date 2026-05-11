@@ -158,13 +158,13 @@
   filter: drop-shadow(0 0 2px rgba(0,0,0,0.5));
 }
 
-.lt-projection-flash {
-  animation: lt-flash-white 1.5s ease-in-out infinite;
+.lt-new-flash {
+  animation: lt-point-pulse 1s ease-in-out infinite;
 }
 
-@keyframes lt-flash-white {
-  0%, 100% { filter: drop-shadow(0 0 1px white); stroke: inherit; }
-  50% { filter: drop-shadow(0 0 8px white); stroke: #ffffff !important; }
+@keyframes lt-point-pulse {
+  0%, 100% { fill-opacity: 0.85; stroke: none; }
+  50% { fill-opacity: 0.4; stroke: white; stroke-width: 2; }
 }
 
 /* Nowcast Tooltip */

@@ -18,6 +18,8 @@ builder.Services.AddSingleton<PythonBackgroundService>();
 builder.Services.AddSingleton<PythonAbiService>();
 builder.Services.AddSingleton<PythonNowcastService>();
 builder.Services.AddSingleton<LightningDataService>();
+builder.Services.AddSingleton<PendingAlertRepository>();
+builder.Services.AddSingleton<WhatsAppService>();
 builder.Services.AddHostedService<GlmSyncHostedService>();
 builder.Services.AddHostedService<LightningAlertWorker>();
 

@@ -20,6 +20,8 @@ public sealed record NowcastCellReport(
     [property: JsonPropertyName("bearingLabel")] string BearingLabel,
     [property: JsonPropertyName("confidence")] double Confidence,
     [property: JsonPropertyName("status")] string Status,
+    [property: JsonPropertyName("lightning_jump")] bool LightningJump,
+    [property: JsonPropertyName("flash_rate_sigma")] double FlashRateSigma,
     [property: JsonPropertyName("projections")] List<NowcastProjection> Projections,
     [property: JsonPropertyName("hullLat")] List<double> HullLat,
     [property: JsonPropertyName("hullLon")] List<double> HullLon
@@ -37,7 +39,9 @@ public sealed record NowcastImpact(
     [property: JsonPropertyName("velocityKmh")] double VelocityKmh,
     [property: JsonPropertyName("bearingDeg")] double BearingDeg,
     [property: JsonPropertyName("bearingLabel")] string BearingLabel,
-    [property: JsonPropertyName("approaching")] bool Approaching
+    [property: JsonPropertyName("approaching")] bool Approaching,
+    [property: JsonPropertyName("lightning_jump")] bool LightningJump,
+    [property: JsonPropertyName("flash_rate_sigma")] double FlashRateSigma
 );
 
 public sealed record NowcastReport(

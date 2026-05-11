@@ -160,6 +160,8 @@ def calculate_eta(
                     bearing_deg=track.bearing_deg,
                     bearing_label=label,
                     approaching=approaching,
+                    lightning_jump=track.lightning_jump,
+                    flash_rate_sigma=track.flash_rate_sigma,
                 )
 
     return None
@@ -214,6 +216,8 @@ def build_cell_reports(tracks: list[CellTrack]) -> list[CellReport]:
             bearing_label=label,
             confidence=track.confidence,
             status=track.status,
+            lightning_jump=track.lightning_jump,
+            flash_rate_sigma=track.flash_rate_sigma,
             projections=projections,
             hull_lat=cell.hull_lat,
             hull_lon=cell.hull_lon,

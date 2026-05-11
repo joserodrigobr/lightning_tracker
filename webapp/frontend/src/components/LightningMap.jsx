@@ -22,7 +22,7 @@ const PROJECTION_COLORS = {
 const getProjectionIcon = (minutes) => {
   const color = PROJECTION_COLORS[minutes] || '#ffffff'
   return L.divIcon({
-    className: 'lt-projection-icon lt-projection-flash',
+    className: 'lt-projection-icon',
     html: `<svg width="24" height="24" viewBox="0 0 24 24"><line x1="4" y1="4" x2="20" y2="20" stroke="${color}" stroke-width="5" stroke-linecap="round"/><line x1="20" y1="4" x2="4" y2="20" stroke="${color}" stroke-width="5" stroke-linecap="round"/></svg>`,
     iconSize: [24, 24],
     iconAnchor: [12, 12],
@@ -75,6 +75,7 @@ export default function LightningMap({
   markerInterval,
   visMode,
   nowcast,
+  showNowcast,
 }) {
   const now = new Date()
   const isSouthAmerica = taker && taker.id === 0
@@ -209,6 +210,8 @@ export default function LightningMap({
               center={[ev.latitude, ev.longitude]}
               radius={5}
               pathOptions={{
+                // Only blink if it's new AND high intensity (red/orange)
+                className: (ageMin < 5 && t > 0.8) ? 'lt-new-flash' : '',
                 color: 'transparent',
                 fillColor: jetColor(t),
                 fillOpacity: 0.85,
@@ -257,7 +260,7 @@ export default function LightningMap({
         })()}
 
         {/* Nowcast Visualization — Cells, Hulls, and Vectors */}
-        {nowcast && nowcast.cells && nowcast.cells.map((cell) => {
+        {showNowcast && nowcast && nowcast.cells && nowcast.cells.map((cell) => {
           const hullPoints = cell.hullLat && cell.hullLat.length >= 3
             ? cell.hullLat.map((lat, i) => [lat, cell.hullLon[i]])
             : null;

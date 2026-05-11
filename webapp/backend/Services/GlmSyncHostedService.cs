@@ -153,13 +153,12 @@ public sealed class GlmSyncHostedService : BackgroundService
 
         var stdoutTask = DrainStreamAsync(proc.StandardOutput, line => {
             _logger.LogInformation("[GLM-SYNC] {Line}", line);
-            _status.AddLog($"[SYNC] {line}"); // Add live progress to status dashboard
-            // Example log: Synced 15 files (10 skipped, 1000 flashes, 5000 events)
+            _status.AddLog($"[SYNC] {line}"); 
+            
+            // Stats parsing
             if (line.Contains("Synced") && line.Contains("files"))
             {
                 var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                // "Synced 15 files (10 skipped, 1000 flashes, 5000 events)..."
-                // Usually parts are: [0]=Synced [1]=15 [2]=files [3]=(10 [4]=skipped, [5]=1000 [6]=flashes, [7]=5000 [8]=events)
                 try {
                     if (int.TryParse(parts[1], out var f)) files = f;
                     if (parts.Length > 3) {
@@ -169,10 +168,27 @@ public sealed class GlmSyncHostedService : BackgroundService
                     }
                 } catch {}
             }
+            else if (line.StartsWith("Synced") && line.Contains("flashes"))
+            {
+                // Single file progress: "Synced FILE: 123 flashes"
+                // This keeps the dashboard alive during long syncs
+            }
         }, cancellationToken);
         var stderrTask = DrainStreamAsync(proc.StandardError, line => _logger.LogWarning("[GLM-SYNC] {Line}", line), cancellationToken);
 
-        await proc.WaitForExitAsync(cancellationToken);
+        // Wait for exit with 10-minute timeout
+        var waitTask = proc.WaitForExitAsync(cancellationToken);
+        var timeoutTask = Task.Delay(TimeSpan.FromMinutes(10), cancellationToken);
+        var completedTask = await Task.WhenAny(waitTask, timeoutTask);
+
+        if (completedTask == timeoutTask)
+        {
+             _logger.LogWarning("GLM sync process timed out after 10 minutes. Killing process.");
+             try { proc.Kill(entireProcessTree: true); } catch {}
+             _status.UpdateSync(0, 0, 0, 0, "Timeout (10min)");
+             return;
+        }
+
         await Task.WhenAll(stdoutTask, stderrTask);
 
         if (proc.ExitCode != 0)

@@ -104,12 +104,14 @@ graph LR
 4. Insere em `raw_files` + `lightning_events` no PostgreSQL
 5. Purga blobs antigos além da janela de retenção
 
-### Ciclo de Alertas (a cada 2 min):
-1. **LightningAlertWorker** (C#) consulta `lightning_events` para cada tomador
-2. Calcula distância mínima via Haversine
-3. Determina nível: 🔴 Red (≤100km) | 🟡 Yellow (100-200km) | ⚠️ Observing (200-500km)
-4. Envia alertas via WhatsApp (Z-API) com templates contextuais
-5. Timer de inatividade de 20min para encerrar sessão (✅ Green)
+### Ciclo de Alertas (Sentinela Nowcast Engine - a cada 5 min):
+1. **LightningAlertWorker** (C#) invoca o motor de Nowcast Python (`src.nowcast.engine`).
+2. **Clustering (DBSCAN)**: Isola células convectivas usando densidade de flashes (EPS=20km, MinSamples=5).
+3. **Rastreamento (Hungarian Algorithm)**: Associa células entre quadros usando matriz de custo multi-fator (distância + área + intensidade).
+4. **Lightning Jump**: Detecta intensificação súbita de flashes (desvio > 2σ) para identificar tempestades severas.
+5. **Human-in-the-Loop**: Alertas de nível Red/Yellow são enviados para a **Fila de Validação** no Dashboard.
+6. **Auto-Approve**: Alertas de alta confiança (>80%) com *Lightning Jump* detectado são enviados automaticamente via WhatsApp sem intervenção humana.
+7. **Monitoramento Ativo**: Meteorologistas podem atualizar durações, alterar níveis ou encerrar alertas em tempo real.
 
 ---
 

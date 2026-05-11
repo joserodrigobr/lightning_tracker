@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 MAX_MATCH_DISTANCE_KM = 80.0   # Maximum allowed centroid displacement between frames
 MIN_TRACK_LENGTH = 2            # Minimum cells to compute a vector
 MAX_MISSED_FRAMES = 2           # How many missed frames before dissipation
-EMA_ALPHA = 0.3                 # Lower alpha for smoother velocity smoothing
+EMA_ALPHA = 0.5                 # Increased for better reactivity to sudden direction changes
 
 
 class CellTracker:
@@ -128,9 +128,17 @@ class CellTracker:
     # -----------------------------------------------------------------
 
     def _build_cost_matrix(self, tracks: list[CellTrack], cells: list[StormCell]) -> np.ndarray:
-        """Build an (M, N) cost matrix where cost is based on distance and area overlap."""
+        """Build an (M, N) cost matrix: C(i,j) = α·Δd + β·ΔA + γ·Δρ.
+        
+        Where:
+          Δd = haversine distance between centroids (km)
+          ΔA = normalised area difference (0–1)
+          Δρ = normalised flash density difference (0–1)
+        """
 
-        import shapely.geometry
+        ALPHA = 1.0   # Distance weight (dominant)
+        BETA = 15.0   # Area similarity weight
+        GAMMA = 10.0  # Density similarity weight
 
         m = len(tracks)
         n = len(cells)
@@ -138,32 +146,36 @@ class CellTracker:
 
         for i, track in enumerate(tracks):
             last = track.cells[-1]
-            # Build previous hull polygon
-            p1 = None
-            if len(last.hull_lat) >= 3:
-                p1 = shapely.geometry.Polygon(zip(last.hull_lon, last.hull_lat))
 
             for j, cell in enumerate(cells):
+                # Δd: haversine distance
                 dist = haversine_km_scalar(
                     last.centroid_lat, last.centroid_lon,
                     cell.centroid_lat, cell.centroid_lon,
                 )
 
-                # Overlap logic (ForTraCC style)
-                overlap_bonus = 1.0
-                if p1 and len(cell.hull_lat) >= 3:
+                # Δ area: normalised difference
+                max_area = max(last.area_km2, cell.area_km2, 1.0)
+                delta_area = abs(last.area_km2 - cell.area_km2) / max_area
+
+                # Δ density: normalised flash rate difference
+                max_rate = max(last.flash_rate, cell.flash_rate, 0.1)
+                delta_density = abs(last.flash_rate - cell.flash_rate) / max_rate
+
+                # Overlap bonus (ForTraCC-style IoU)
+                overlap_discount = 0.0
+                if len(last.hull_lat) >= 3 and len(cell.hull_lat) >= 3:
                     try:
+                        import shapely.geometry
+                        p1 = shapely.geometry.Polygon(zip(last.hull_lon, last.hull_lat))
                         p2 = shapely.geometry.Polygon(zip(cell.hull_lon, cell.hull_lat))
-                        if p1.intersects(p2):
-                            intersection = p1.intersection(p2).area
-                            union = p1.union(p2).area
-                            overlap_ratio = intersection / union if union > 0 else 0
-                            # Significant overlap reduces cost (improves matching)
-                            overlap_bonus = 1.0 + (overlap_ratio * 5.0)
+                        if p1.is_valid and p2.is_valid and p1.intersects(p2):
+                            iou = p1.intersection(p2).area / p1.union(p2).area
+                            overlap_discount = iou * 20.0  # Strong reward for overlap
                     except Exception:
                         pass
 
-                cost[i, j] = dist / overlap_bonus
+                cost[i, j] = (ALPHA * dist) + (BETA * delta_area) + (GAMMA * delta_density) - overlap_discount
 
         return cost
 
@@ -210,17 +222,39 @@ class CellTracker:
         )
         track.velocity_history.append(snap)
 
-        # Keep only last 6 observations
-        if len(track.velocity_history) > 6:
-            track.velocity_history = track.velocity_history[-6:]
+        # Lightning Jump Detection (2σ rule)
+        # We need a history of flash rates to calculate sigma
+        rates = [c.flash_rate for c in track.cells[:-1]] # Exclude current cell for baseline
+        if len(rates) >= 5:
+            avg_rate = np.mean(rates)
+            std_rate = np.std(rates)
+            if std_rate > 0:
+                sigma = (cell.flash_rate - avg_rate) / std_rate
+                track.flash_rate_sigma = round(float(sigma), 2)
+                # 2-sigma jump is a strong indicator of intensification
+                if sigma >= 2.0:
+                    track.lightning_jump = True
+                    logger.info("LIGHTNING JUMP detected for track %s (sigma=%.2f)", track.track_id[:8], sigma)
+                else:
+                    # Reset if it cools down? Or keep for the track duration?
+                    # Usually we keep it if it's recent, but let's reset if it's significantly lower now
+                    if sigma < 1.0: track.lightning_jump = False
+            else:
+                track.flash_rate_sigma = 0.0
+        else:
+            track.flash_rate_sigma = 0.0
 
-        # Smooth with EMA (FORTRACC-style momentum correction)
+        # Keep only last 10 observations for velocity and history
+        if len(track.velocity_history) > 10:
+            track.velocity_history = track.velocity_history[-10:]
+
+        # Smooth with EMA
         if len(track.velocity_history) >= 2:
             alpha = self._ema_alpha
             track.velocity_kmh = round(
                 alpha * raw_velocity + (1 - alpha) * track.velocity_kmh, 1
             )
-            recent_bearings = [s.bearing_deg for s in track.velocity_history[-3:]]
+            recent_bearings = [s.bearing_deg for s in track.velocity_history[-5:]]
             track.bearing_deg = round(circular_mean(recent_bearings), 1)
             
             # Area trend smoothing

@@ -14,6 +14,8 @@ export default function SideMenu({
   onOpenDataRequest,
   isGeneratingTable,
   tableStatus,
+  view,
+  onViewChange,
 }) {
   const [expandedSection, setExpandedSection] = useState(null);
 
@@ -30,6 +32,28 @@ export default function SideMenu({
         <div className="lt-menu__header">
           <span className="lt-menu__title">MENU</span>
           <button className="lt-menu__close" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="lt-menu__section">
+          <h3 className="lt-menu__section-title">Sentinela</h3>
+          <ul className="lt-menu__list">
+            <li>
+              <button 
+                className={`lt-menu__item ${view === 'map' ? 'lt-menu__item--active' : ''}`}
+                onClick={() => { onViewChange('map'); onClose(); }}
+              >
+                Mapa de Monitoramento
+              </button>
+            </li>
+            <li>
+              <button 
+                className={`lt-menu__item ${view === 'alerts' ? 'lt-menu__item--active' : ''}`}
+                onClick={() => { onViewChange('alerts'); onClose(); }}
+              >
+                Validação de Alertas
+              </button>
+            </li>
+          </ul>
         </div>
 
         <div className="lt-menu__section">

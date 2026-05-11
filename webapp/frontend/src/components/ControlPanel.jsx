@@ -34,6 +34,8 @@ export default function ControlPanel({
   onShowRingsChange,
   accumulatedMode,
   onAccumulatedModeChange,
+  showNowcast,
+  onShowNowcastChange,
   onReset,
   animating,
 }) {
@@ -143,6 +145,18 @@ export default function ControlPanel({
             </span>
           </label>
         )}
+
+        <label className="lt-ctrl__toggle">
+          <span>Previsão de Deslocamento</span>
+          <input
+            type="checkbox"
+            checked={showNowcast}
+            onChange={(e) => onShowNowcastChange(e.target.checked)}
+          />
+          <span className={`lt-ctrl__check ${showNowcast ? 'lt-ctrl__check--on' : ''}`}>
+            {showNowcast ? '✓' : ''}
+          </span>
+        </label>
 
         <label className="lt-ctrl__toggle">
           <span>Raios de Alcance</span>

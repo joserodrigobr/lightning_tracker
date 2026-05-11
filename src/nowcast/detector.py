@@ -26,33 +26,92 @@ DEFAULT_EPS_KM = 25.0       # Neighbourhood radius for DBSCAN
 DEFAULT_MIN_SAMPLES = 5     # Minimum flashes to form a cell
 
 
-def _convex_hull_2d(points: np.ndarray) -> np.ndarray:
-    """Simple monotone-chain convex hull for 2-D points.
-
-    ``points`` shape (N, 2).  Returns hull vertices in order, shape (M, 2).
+def _create_grid_polygon(lats: np.ndarray, lons: np.ndarray, grid_size: float = 0.05) -> tuple[list[float], list[float], float]:
+    """Create a squared polygon based on point density grid.
+    
+    Parameters
+    ----------
+    lats, lons : coordinates
+    grid_size : size of the square in degrees (0.05 ~ 5.5km)
+    
+    Returns
+    -------
+    (hull_lat, hull_lon, area_km2)
     """
+    import shapely.geometry
+    from shapely.ops import unary_union
+    from .geo_utils import spherical_polygon_area_km2
 
-    pts = points[np.lexsort((points[:, 1], points[:, 0]))]
-    if len(pts) <= 1:
-        return pts
+    if len(lats) == 0:
+        return [], [], 0.0
 
-    def _cross(o: np.ndarray, a: np.ndarray, b: np.ndarray) -> float:
-        return float((a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]))
+    # Find unique grid cells occupied by points
+    # We use floor to bin coordinates into grid indices
+    lat_indices = np.floor(lats / grid_size).astype(int)
+    lon_indices = np.floor(lons / grid_size).astype(int)
+    
+    # Convert to list to avoid exhaustion and speed up multiple passes
+    indices = list(zip(lat_indices, lon_indices))
+    unique_cells = set(indices)
+    
+    # Adaptive dilation: expand more around high-density cells (core),
+    # less around sparse cells (periphery). KDE-inspired approach.
+    cell_counts = {}
+    for key in indices:
+        cell_counts[key] = cell_counts.get(key, 0) + 1
+    
+    if cell_counts:
+        counts = list(cell_counts.values())
+        density_threshold = np.median(counts) if len(counts) > 1 else 1
+    else:
+        density_threshold = 1
+    
+    dilated_cells = set()
+    for cell_key in unique_cells:
+        count = cell_counts.get(cell_key, 0)
+        # High-density core: 2-cell buffer (anvil/outflow zone)
+        # Low-density periphery: 1-cell buffer
+        radius = 2 if count >= density_threshold else 1
+        lat_idx, lon_idx = cell_key
+        for i in range(-radius, radius + 1):
+            for j in range(-radius, radius + 1):
+                dilated_cells.add((lat_idx + i, lon_idx + j))
+    
+    squares = []
+    for lat_idx, lon_idx in dilated_cells:
+        # Create a box for this cell
+        min_lat = lat_idx * grid_size
+        max_lat = (lat_idx + 1) * grid_size
+        min_lon = lon_idx * grid_size
+        max_lon = (lon_idx + 1) * grid_size
+        
+        # shapely.geometry.box(minx, miny, maxx, maxy)
+        # In our case x=lon, y=lat
+        squares.append(shapely.geometry.box(min_lon, min_lat, max_lon, max_lat))
+    
+    if not squares:
+        return [], [], 0.0
+        
+    # Merge all squares into a single (possibly multi) polygon
+    merged = unary_union(squares)
+    
+    # We want the exterior of the largest polygon if it's a MultiPolygon
+    if isinstance(merged, shapely.geometry.MultiPolygon):
+        # Pick the largest one by area
+        main_poly = max(merged.geoms, key=lambda p: p.area)
+    elif isinstance(merged, shapely.geometry.Polygon):
+        main_poly = merged
+    else:
+        return [], [], 0.0
 
-    lower: list[np.ndarray] = []
-    for p in pts:
-        while len(lower) >= 2 and _cross(lower[-2], lower[-1], p) <= 0:
-            lower.pop()
-        lower.append(p)
-
-    upper: list[np.ndarray] = []
-    for p in reversed(pts):
-        while len(upper) >= 2 and _cross(upper[-2], upper[-1], p) <= 0:
-            upper.pop()
-        upper.append(p)
-
-    hull = lower[:-1] + upper[:-1]
-    return np.array(hull) if hull else pts
+    hull_lon, hull_lat = main_poly.exterior.xy
+    hull_lon = hull_lon.tolist()
+    hull_lat = hull_lat.tolist()
+    
+    # Calculate real-world area
+    area = spherical_polygon_area_km2(hull_lat, hull_lon)
+    
+    return hull_lat, hull_lon, area
 
 
 def detect_cells(
@@ -63,20 +122,10 @@ def detect_cells(
     eps_km: float = DEFAULT_EPS_KM,
     min_samples: int = DEFAULT_MIN_SAMPLES,
     time_window_seconds: float = 300.0,
+    event_lats: Optional[np.ndarray] = None,
+    event_lons: Optional[np.ndarray] = None,
 ) -> list[StormCell]:
-    """Cluster lightning flashes into storm cells using DBSCAN.
-
-    Parameters
-    ----------
-    lats, lons : arrays of flash coordinates (degrees)
-    frame_time : central timestamp of the frame (UTC)
-    eps_km : neighbourhood radius in km
-    min_samples : minimum number of flashes to form a cell
-    time_window_seconds : duration of the frame in seconds (for flash_rate)
-
-    Returns
-    -------
-    List of StormCell objects, one per cluster (noise points are discarded).
+    """Cluster lightning flashes into storm cells and define geometry using grid density.
     """
 
     if len(lats) < min_samples:
@@ -111,40 +160,28 @@ def detect_cells(
         clon = lons[mask]
         n = int(mask.sum())
 
-        # Centroid (simple mean — adequate for cells < 200km)
-        centroid_lat = float(np.mean(clat))
-        centroid_lon = float(np.mean(clon))
-
-        # Bounding box
+        # Bounding box of flashes
         bbox = (float(np.min(clat)), float(np.min(clon)),
                 float(np.max(clat)), float(np.max(clon)))
 
-        # Geometry (Concave Hull via Shapely)
-        import shapely.geometry
-        from shapely import concave_hull
-
-        points = [shapely.geometry.Point(lon, lat) for lon, lat in zip(clon, clat)]
-        multipoint = shapely.geometry.MultiPoint(points)
+        # Identify events that belong to this cluster area
+        poly_lats = clat
+        poly_lons = clon
         
-        # Concave hull with ratio 0.15 (tighter than convex, but stable)
-        # Ratio 0.0 is convex hull, 1.0 is minimal concave hull.
-        hull = concave_hull(multipoint, ratio=0.15)
-        
-        if isinstance(hull, shapely.geometry.Polygon):
-            hull_lon, hull_lat = hull.exterior.xy
-            hull_lon = hull_lon.tolist()
-            hull_lat = hull_lat.tolist()
-        elif isinstance(hull, shapely.geometry.MultiPoint):
-             hull_lon = [p.x for p in hull.geoms]
-             hull_lat = [p.y for p in hull.geoms]
-        else:
-             hull_lon = []
-             hull_lat = []
+        if event_lats is not None and len(event_lats) > 0:
+            ev_mask = (event_lats >= bbox[0] - 0.1) & (event_lats <= bbox[2] + 0.1) & \
+                      (event_lons >= bbox[1] - 0.1) & (event_lons <= bbox[3] + 0.1)
+            
+            if ev_mask.any():
+                poly_lats = np.concatenate([clat, event_lats[ev_mask]])
+                poly_lons = np.concatenate([clon, event_lons[ev_mask]])
 
-        # Area from hull
-        area = 0.0
-        if len(hull_lat) >= 3:
-            area = spherical_polygon_area_km2(hull_lat, hull_lon)
+        # Centroid (using all points in the cluster + associated events)
+        centroid_lat = float(np.mean(poly_lats))
+        centroid_lon = float(np.mean(poly_lons))
+
+        # Geometry (Density Grid Polygon)
+        hull_lat, hull_lon, area = _create_grid_polygon(poly_lats, poly_lons, grid_size=0.05)
 
         # Max extent (pairwise max distance — approximate via bbox diagonal)
         max_extent = 0.0
