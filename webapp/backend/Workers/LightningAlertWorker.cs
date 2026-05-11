@@ -40,6 +40,7 @@ public class LightningAlertWorker : BackgroundService
             try
             {
                 await CheckAndQueueAlertsAsync(stoppingToken);
+                await ProcessPeriodicUpdatesAsync(stoppingToken);
             }
             catch (Exception ex)
             {
@@ -118,9 +119,39 @@ public class LightningAlertWorker : BackgroundService
 
                 var recentEvents = (await dataService.GetEventsAsync(taker, DateTime.UtcNow.AddMinutes(-10), DateTime.UtcNow, 200.0, "flash", 100, ct)).ToList();
                 
+                var dist = recentEvents.Any() ? recentEvents.Min(e => HaversineKm(taker.Lat, taker.Lon, e.Latitude, e.Longitude)) : 0;
+                
+                // If nowcast impact is null, try to create a proximity-based one
+                if (impact == null && targetLevel != AlertLevel.None)
+                {
+                    // Find nearest cell in nowcast to get some velocity info
+                    var nearestCell = nowcast.Cells
+                        .OrderBy(c => HaversineKm(taker.Lat, taker.Lon, c.CentroidLat, c.CentroidLon))
+                        .FirstOrDefault();
+
+                    impact = new NowcastImpact(
+                        TakerId: taker.Id,
+                        TakerName: taker.Name,
+                        CellId: nearestCell?.CellId ?? "proximity",
+                        EtaMinutes: (nearestCell != null && nearestCell.VelocityKmh > 5) 
+                            ? (int)(dist / nearestCell.VelocityKmh * 60) 
+                            : 0,
+                        RingKm: (int)dist,
+                        ProjectedLat: taker.Lat,
+                        ProjectedLon: taker.Lon,
+                        Confidence: 0.5,
+                        VelocityKmh: nearestCell?.VelocityKmh ?? 0,
+                        BearingDeg: nearestCell?.BearingDeg ?? 0,
+                        BearingLabel: nearestCell?.BearingLabel ?? "--",
+                        Approaching: true,
+                        LightningJump: nearestCell?.LightningJump ?? false,
+                        FlashRateSigma: nearestCell?.FlashRateSigma ?? 0
+                    );
+                }
+
                 var payload = new AlertPayload {
                     FlashCount = recentEvents.Count,
-                    MinDistance = recentEvents.Any() ? recentEvents.Min(e => HaversineKm(taker.Lat, taker.Lon, e.Latitude, e.Longitude)) : 0,
+                    MinDistance = dist,
                     CountsSummary = BuildSummary(taker, recentEvents),
                     Impact = impact
                 };
@@ -201,5 +232,64 @@ public class LightningAlertWorker : BackgroundService
                 Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
         var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
         return R * c;
+    }
+
+    private async Task ProcessPeriodicUpdatesAsync(CancellationToken ct)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var pendingRepo = scope.ServiceProvider.GetRequiredService<PendingAlertRepository>();
+        var dataService = scope.ServiceProvider.GetRequiredService<LightningDataService>();
+        var takerRepo = scope.ServiceProvider.GetRequiredService<ServiceTakerRepository>();
+        var wa = scope.ServiceProvider.GetRequiredService<WhatsAppService>();
+
+        var activeAlerts = await pendingRepo.GetActiveAsync(ct);
+        if (!activeAlerts.Any()) return;
+
+        var takers = await takerRepo.GetAllAsync(ct);
+
+        foreach (var alert in activeAlerts)
+        {
+            if (alert.AlertLevel == "Observing") continue;
+
+            // Frequency: 30 minutes
+            var lastBaseline = alert.LastUpdateAt ?? alert.SentAt ?? alert.CreatedAt;
+            if (DateTime.UtcNow - lastBaseline >= TimeSpan.FromMinutes(30))
+            {
+                var taker = takers.FirstOrDefault(t => t.Id == alert.TakerId);
+                if (taker == null) continue;
+
+                _logger.LogInformation("[SENTINEL] Enviando atualização periódica (30min) para {Taker}", alert.TakerName);
+
+                var recentEvents = (await dataService.GetEventsAsync(taker, DateTime.UtcNow.AddMinutes(-10), DateTime.UtcNow, 200.0, "flash", 100, ct)).ToList();
+                var payload = new AlertPayload {
+                    FlashCount = recentEvents.Count,
+                    MinDistance = recentEvents.Any() ? recentEvents.Min(e => HaversineKm(taker.Lat, taker.Lon, e.Latitude, e.Longitude)) : 0,
+                    CountsSummary = BuildSummary(taker, recentEvents),
+                    Impact = alert.GetPayload().Impact
+                };
+
+                var contactsPath = Path.Combine(Directory.GetCurrentDirectory(), "db/alert_contacts.json");
+                if (File.Exists(contactsPath))
+                {
+                    var json = await File.ReadAllTextAsync(contactsPath, ct);
+                    var contacts = JsonSerializer.Deserialize<List<AlertContact>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    var takerContacts = contacts?.Where(c => c.UnitName.Equals(alert.TakerName, StringComparison.OrdinalIgnoreCase)).ToList();
+
+                    if (takerContacts != null && takerContacts.Any())
+                    {
+                        foreach (var contact in takerContacts)
+                        {
+                            if (!string.IsNullOrEmpty(contact.Phone))
+                            {
+                                await wa.SendPeriodicUpdateAsync(contact.Phone, contact.Name, alert.TakerName, alert.AlertLevel, payload);
+                            }
+                        }
+                    }
+                }
+
+                alert.LastUpdateAt = DateTime.UtcNow;
+                await pendingRepo.UpdateAlertAsync(alert, ct);
+            }
+        }
     }
 }

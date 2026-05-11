@@ -104,14 +104,19 @@ graph LR
 4. Insere em `raw_files` + `lightning_events` no PostgreSQL
 5. Purga blobs antigos além da janela de retenção
 
-### Ciclo de Alertas (Sentinela Nowcast Engine - a cada 5 min):
+### Ciclo de Alertas (Sentinela Nowcast Engine - a cada 2 min):
 1. **LightningAlertWorker** (C#) invoca o motor de Nowcast Python (`src.nowcast.engine`).
 2. **Clustering (DBSCAN)**: Isola células convectivas usando densidade de flashes (EPS=20km, MinSamples=5).
 3. **Rastreamento (Hungarian Algorithm)**: Associa células entre quadros usando matriz de custo multi-fator (distância + área + intensidade).
-4. **Lightning Jump**: Detecta intensificação súbita de flashes (desvio > 2σ) para identificar tempestades severas.
-5. **Human-in-the-Loop**: Alertas de nível Red/Yellow são enviados para a **Fila de Validação** no Dashboard.
-6. **Auto-Approve**: Alertas de alta confiança (>80%) com *Lightning Jump* detectado são enviados automaticamente via WhatsApp sem intervenção humana.
-7. **Monitoramento Ativo**: Meteorologistas podem atualizar durações, alterar níveis ou encerrar alertas em tempo real.
+4. **Impacto & ETA**: Calcula tempo de chegada estimado para cada tomador. Se uma tempestade está próxima (<100km) mas sem trajetória definida, o sistema utiliza um **fallback de proximidade** com estimativa baseada na célula mais próxima.
+5. **Human-in-the-Loop**:
+    - Alertas Red/Yellow/Observing entram na **Fila de Validação**.
+    - Meteorologistas podem ajustar a **Duração** e inserir o **ETA Manual** antes de aprovar.
+6. **Auto-Approve**: Alertas de alta confiança (>80%) com *Lightning Jump* detectado são enviados automaticamente via WhatsApp.
+7. **Monitoramento Ativo**: 
+    - **Atualizações Automáticas**: O sistema envia um novo relatório a cada **30 minutos** informando a contagem de raios nos anéis de 30/50/100/200km e o horário da próxima atualização.
+    - Operadores podem alterar níveis ou encerrar alertas em tempo real.
+8. **Controle de Visualização**: O mapa possui um toggle para habilitar/desabilitar a visualização das projeções e polígonos de Nowcast para manter a interface performática.
 
 ---
 

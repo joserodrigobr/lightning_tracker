@@ -6,6 +6,7 @@ const AlertDashboard = () => {
   const [activeAlerts, setActiveAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [durations, setDurations] = useState({});
+  const [customEtas, setCustomEtas] = useState({});
 
   const fetchAll = async () => {
     try {
@@ -13,8 +14,13 @@ const AlertDashboard = () => {
         fetch('/api/alerts/pending'),
         fetch('/api/alerts/active')
       ]);
-      const pending = await pendingRes.json();
-      const active = await activeRes.json();
+      let pending = await pendingRes.json();
+      let active = await activeRes.json();
+
+      // Sort pending by priority: Red > Yellow > Observing
+      const priorityMap = { 'Red': 1, 'Yellow': 2, 'Observing': 3 };
+      pending.sort((a, b) => (priorityMap[a.alertLevel] || 99) - (priorityMap[b.alertLevel] || 99));
+
       setPendingAlerts(pending);
       setActiveAlerts(active);
     } catch (err) {
@@ -34,10 +40,18 @@ const AlertDashboard = () => {
     setDurations(prev => ({ ...prev, [id]: val }));
   };
 
+  const handleEtaChange = (id, val) => {
+    setCustomEtas(prev => ({ ...prev, [id]: val }));
+  };
+
   const handleApprove = async (id) => {
     const duration = durations[id] || 60;
+    const eta = customEtas[id];
+    let url = `/api/alerts/${id}/approve?duration=${duration}`;
+    if (eta !== undefined) url += `&eta=${eta}`;
+
     try {
-      const response = await fetch(`/api/alerts/${id}/approve?duration=${duration}`, { method: 'POST' });
+      const response = await fetch(url, { method: 'POST' });
       if (response.ok) {
         fetchAll();
       }
@@ -80,12 +94,16 @@ const AlertDashboard = () => {
     }
   };
 
-  const getMessagePreview = (alert, duration) => {
+  const getMessagePreview = (alert, duration, customEta) => {
     const level = alert.alertLevel.toUpperCase();
     const payload = JSON.parse(alert.messagePayloadJson);
     const dur = duration || alert.durationMinutes || 60;
     
-    return `[WHATSAPP PREVIEW]\n${level === 'RED' ? '🔴 ALERTA VERMELHO' : '🟡 ALERTA AMARELO'} - SENTINELA\nUnidade: ${alert.takerName}\nRaio min: ${payload.minDistance?.toFixed(1)} km\nDuração: ${dur} min\nETA: ${payload.impact?.etaMinutes || '--'} min`;
+    // Support both PascalCase and camelCase for safety
+    const impact = payload.Impact ?? payload.impact;
+    const eta = customEta !== undefined ? customEta : (impact?.EtaMinutes ?? impact?.etaMinutes ?? '--');
+    
+    return `[WHATSAPP PREVIEW]\n${level === 'RED' ? '🔴 ALERTA VERMELHO' : '🟡 ALERTA AMARELO'} - SENTINELA\nUnidade: ${alert.takerName}\nForam detectados raios nas proximidades.\nDuração: ${dur} min\nETA: ${eta} min`;
   };
 
   if (loading) return <div className="alert-dashboard"><div className="empty-state">Carregando centro de comando...</div></div>;
@@ -111,6 +129,12 @@ const AlertDashboard = () => {
                 const payload = JSON.parse(alert.messagePayloadJson);
                 const levelClass = alert.alertLevel.toLowerCase();
                 const currentDuration = durations[alert.id] || 60;
+                const currentEta = customEtas[alert.id];
+                
+                const dist = payload.MinDistance ?? payload.minDistance ?? 0;
+                const impact = payload.Impact ?? payload.impact;
+                const eta = currentEta !== undefined ? currentEta : (impact?.EtaMinutes ?? impact?.etaMinutes ?? '--');
+                const lightningJump = impact?.LightningJump ?? impact?.lightning_jump;
 
                 return (
                   <div key={alert.id} className={`alert-card ${levelClass}`}>
@@ -119,32 +143,43 @@ const AlertDashboard = () => {
                       <div className={`alert-badge ${levelClass}`}>{alert.alertLevel}</div>
                     </div>
 
-                    {payload.impact?.lightning_jump && (
-                      <div className="jump-indicator">⚡ LIGHTNING JUMP DETECTADO (σ={payload.impact.flash_rate_sigma})</div>
+                    {lightningJump && (
+                      <div className="jump-indicator">⚡ LIGHTNING JUMP DETECTADO</div>
                     )}
 
                     <div className="alert-details">
                       <div className="detail-item">
                         <span className="detail-label">ETA Impacto</span>
-                        <span className="detail-value highlight">{payload.impact?.etaMinutes} min</span>
+                        <span className="detail-value highlight">{eta} min</span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Distância</span>
-                        <span className="detail-value">{payload.minDistance?.toFixed(1)} km</span>
+                        <span className="detail-value">{dist.toFixed(1)} km</span>
                       </div>
                     </div>
 
                     <div className="message-preview-box">
-                      <pre>{getMessagePreview(alert, currentDuration)}</pre>
+                      <pre>{getMessagePreview(alert, currentDuration, currentEta)}</pre>
                     </div>
 
                     <div className="alert-form">
-                      <label>Duração do Alerta (min):</label>
-                      <input 
-                        type="number" 
-                        value={currentDuration} 
-                        onChange={(e) => handleDurationChange(alert.id, parseInt(e.target.value))}
-                      />
+                      <div className="form-row">
+                        <label>ETA Impacto (min):</label>
+                        <input 
+                          type="number" 
+                          placeholder={impact?.EtaMinutes ?? "--"}
+                          value={currentEta !== undefined ? currentEta : ''} 
+                          onChange={(e) => handleEtaChange(alert.id, parseInt(e.target.value))}
+                        />
+                      </div>
+                      <div className="form-row">
+                        <label>Duração do Alerta (min):</label>
+                        <input 
+                          type="number" 
+                          value={currentDuration} 
+                          onChange={(e) => handleDurationChange(alert.id, parseInt(e.target.value))}
+                        />
+                      </div>
                     </div>
 
                     <div className="alert-actions">

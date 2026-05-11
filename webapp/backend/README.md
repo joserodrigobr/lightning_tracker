@@ -86,7 +86,7 @@ webapp/backend/
 |--------|------|-----------|--------|
 | GET | `/api/alerts/pending` | Lista alertas aguardando aprovação | — |
 | GET | `/api/alerts/active` | Lista alertas em monitoramento ativo | — |
-| POST | `/api/alerts/{id}/approve` | Aprova e envia alerta manual | `duration` |
+| POST | `/api/alerts/{id}/approve` | Aprova e envia alerta manual | `duration`, `eta` |
 | POST | `/api/alerts/{id}/update` | Altera nível ou duração de alerta ativo | `newLevel`, `newDuration` |
 | POST | `/api/alerts/{id}/close` | Encerra alerta e envia mensagem "Green" | — |
 
@@ -122,21 +122,23 @@ Ciclo: a cada 300s (configurável)
 Motor de alertas em tempo real com suporte a Nowcast, Tracking e Aprovação Humana.
 
 ```
-Ciclo: a cada 5 minutos
+Ciclo: a cada 2 minutos
   1. Invoca Python Nowcast Engine (src.nowcast.engine)
-  2. Identifica impactos previstos (ETA < 30min) para cada tomador
-  3. Determina nível de alerta (Red/Yellow/Observing)
-  4. Lógica de Aprovação:
+  2. Identifica impactos previstos (ETA < 120min) ou proximidade (<500km)
+  3. Lógica de Aprovação:
      - SE Lightning Jump + Confiança > 80% → AUTO-APPROVE (envio imediato)
      - CASO CONTRÁRIO → Fila de Validação (Aprovação Manual)
-  5. Envia mensagem formatada via Z-API WhatsApp
-  6. Mantém estado na tabela `pending_alerts` (SQLite)
+  4. Gerenciamento de Monitoramento:
+     - Envia atualizações automáticas a cada 30 min para alertas ativos (Red/Yellow).
+     - Relatório inclui contagem de raios nos anéis de 30, 50, 100 e 200km.
+  5. Envia mensagens via Z-API WhatsApp com suporte a ETA manual.
+  6. Re-queuing Automático: Se um alerta for encerrado mas a ameaça persistir, o sistema gera novo alerta para validação.
 ```
 
 **Métricas de Decisão**:
 - **Lightning Jump**: Intensificação > 2σ no flash rate (tempestade severa)
 - **Confidence**: Índice de acerto do rastreamento baseado em overlap e custo multi-fator
-- **ETA**: Estimativa de tempo de chegada baseada no vetor de translação da célula
+- **Manual ETA**: Permite que o operador insira o tempo estimado de chegada verificado
 
 ### `LightningDataService`
 Acesso direto ao PostgreSQL com filtragem espacial.

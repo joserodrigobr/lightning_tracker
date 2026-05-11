@@ -386,7 +386,7 @@ public static class LightningTrackerEndpoints
             return Results.Json(alerts);
         });
 
-        app.MapPost("/api/alerts/{id}/approve", async (Guid id, int? duration, PendingAlertRepository repo, WhatsAppService wa, CancellationToken ct) =>
+        app.MapPost("/api/alerts/{id}/approve", async (Guid id, int? duration, int? eta, PendingAlertRepository repo, WhatsAppService wa, CancellationToken ct) =>
         {
             var alert = await repo.GetByIdAsync(id, ct);
             if (alert == null || alert.Status != "Pending") return Results.NotFound();
@@ -395,11 +395,18 @@ public static class LightningTrackerEndpoints
             alert.DurationMinutes = duration ?? alert.DurationMinutes;
             alert.SentAt = DateTime.UtcNow;
 
+            var payload = alert.GetPayload();
+            if (eta.HasValue && payload.Impact != null)
+            {
+                // Update ETA in payload if provided by operator
+                payload.Impact = payload.Impact with { EtaMinutes = eta.Value };
+                alert.MessagePayloadJson = System.Text.Json.JsonSerializer.Serialize(payload);
+            }
+
             // Load contacts and send WhatsApp
             var takerContacts = await GetTakerContactsAsync(alert.TakerName, ct);
             if (takerContacts.Any())
             {
-                var payload = alert.GetPayload();
                 foreach (var contact in takerContacts)
                 {
                     if (!string.IsNullOrEmpty(contact.Phone))

@@ -87,6 +87,8 @@ App.jsx (State Manager)
 ### `AlertDashboard.jsx`
 - **Centro de Operações Sentinel** — Interface para meteorologistas.
 - **Fila de Validação**: Exibe alertas pendentes com métricas de impacto, ETA e botões de aprovação/rejeição.
+- **Controle Manual**: Permite que o operador insira um **ETA Manual** e ajuste a **Duração** do alerta antes do disparo.
+- **Preview em Tempo Real**: Exibe o texto exato da mensagem de WhatsApp (incluindo o ETA manual) que será enviada.
 - **Monitoramento Ativo**: Lista alertas em curso, permitindo estender a duração, alterar o nível ou encerrar manualmente.
 - **Badges de Intensidade**: Sinaliza visualmente ocorrências de **Lightning Jump** e alertas **Auto-Aprovados**.
 - **Polling**: Atualiza automaticamente a cada 10 segundos.

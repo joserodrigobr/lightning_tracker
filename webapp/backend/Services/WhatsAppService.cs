@@ -40,10 +40,31 @@ O status da unidade *{unitName}* foi atualizado para nível {levelLabel}.
 
 📊 *Resumo Atual:*
 ⚡ Raios detectados: {payload.FlashCount}
-📍 Distância mínima: {payload.MinDistance:F1} km
 ⏱️ Duração prevista: {duration} minutos
 
 📍 Acompanhe: http://nowcast.blueocean.com";
+
+        await SendMessageAsync(phone, messageText);
+    }
+
+    public async Task SendPeriodicUpdateAsync(string phone, string contactName, string unitName, string alertLevel, AlertPayload payload)
+    {
+        var levelEmoji = alertLevel.ToUpper() == "RED" ? "🔴" : "🟡";
+        // Use BRT (UTC-3) for the message
+        var nextUpdate = DateTime.UtcNow.AddMinutes(27).AddHours(-3).ToString("HH:mm");
+        
+        var messageText = $@"{levelEmoji} *ATUALIZAÇÃO PERIÓDICA - SENTINELA*
+
+Olá {contactName}!
+Seguem as informações atualizadas para a unidade *{unitName}*:
+
+📊 *Resumo de Proximidade (Últimos 10 min):* {payload.CountsSummary}
+
+⛈️ *Total de raios na região:* {payload.FlashCount}
+
+A próxima atualização automática será enviada às aproximadamente *{nextUpdate}*.
+
+📍 Acompanhe ao vivo: http://nowcast.blueocean.com";
 
         await SendMessageAsync(phone, messageText);
     }
@@ -103,12 +124,11 @@ Nossa equipe está em vigilância. Caso o tempo mude ou a atividade se aproxime,
         return $@"🟡 *ALERTA AMARELO - SENTINELA*
 
 Olá {contactName}! 
-**Foram detectados raios a {minDistance:F1} km de distância da unidade {unitName}.**
+**Foram detectados raios nas proximidades da unidade {unitName}.**
 
 📊 *Informações de proximidade:* {countsSummary}
 
-⛈️ *Total de raios:* {count}
-📍 *Raio mais próximo:* {minDistance:F1} km{statusText}
+⛈️ *Total de raios:* {count}{statusText}
 
 📍 Veja no mapa: http://nowcast.blueocean.com";
     }
@@ -122,12 +142,11 @@ Olá {contactName}!
         return $@"🔴 *ALERTA VERMELHO - SENTINELA*
 
 Olá {contactName}! 
-**Foram detectados raios a {minDistance:F1} km de distância da unidade {unitName}.**
+**Foram detectados raios nas proximidades da unidade {unitName}.**
 
 📊 *Informações de proximidade:* {countsSummary}
 
-⛈️ *Total de raios:* {count}
-📍 *Raio mais próximo:* {minDistance:F1} km{prediction}
+⛈️ *Total de raios:* {count}{prediction}
 
 📍 Veja no mapa: http://nowcast.blueocean.com
 

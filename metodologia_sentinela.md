@@ -45,24 +45,28 @@ O rastreamento temporal é feito comparando células entre quadros sucessivos (t
 ## 5. Análise de Impacto e ETA
 Para cada unidade de serviço (tomador), o sistema realiza uma varredura de intersecção:
 
-1.  **Anéis de Alcance:** Monitora perímetros de 30km (Amarelo) e 50km (Vermelho).
-2.  **Cálculo de ETA:** O sistema simula o deslocamento do polígono da tempestade ao longo do vetor. O impacto é registrado quando a borda do polígono (considerando sua expansão) toca o anel de alcance da unidade.
+1.  **Anéis de Alcance:** Monitora perímetros de 30km, 50km, 100km e 200km.
+2.  **Cálculo de ETA (Nowcast):** O sistema simula o deslocamento do polígono da tempestade ao longo do vetor. O impacto é registrado quando a borda do polígono toca o anel de alcance da unidade.
+3.  **Fallback de Proximidade:** Caso a tempestade esteja em rota incerta ou estacionária mas dentro de um raio de interesse (<100km), o sistema calcula um ETA conservador baseado na distância direta dividida pela velocidade da célula mais próxima, garantindo que o operador nunca fique sem uma estimativa de tempo.
 
 ---
 
 ## 6. Fluxo Humano de Alertas (Sentinela Operations)
-Para evitar alarmes falsos, o sistema implementa um workflow de **Human-in-the-loop**:
+O sistema opera em ciclos de **2 minutos**, garantindo alta responsividade:
 
-1.  **Gatilho:** Se uma tempestade tem ETA <= 30min para uma unidade, um alerta **Pendente** é gerado.
-2.  **Validação:** O meteorologista avalia a consistência no mapa, ajusta a duração prevista e aprova o envio.
-3.  **Ciclo de Vida:**
-    *   **Ativo:** Após aprovação, o alerta é monitorado. O meteorologista pode atualizar o nível (ex: Amarelo -> Vermelho) se a situação piorar.
-    *   **Resolvido:** Quando a tempestade se afasta ou dissipa, o meteorologista encerra o alerta, enviando a mensagem de normalização via WhatsApp.
+1.  **Gatilho:** Se uma tempestade tem impacto previsto ou proximidade crítica, um alerta **Pendente** é gerado na Fila de Validação.
+2.  **Validação & Controle Manual:** O meteorologista avalia a consistência no mapa, podendo inserir um **ETA Manual** verificado e ajustar a duração prevista.
+3.  **Atualizações Automáticas:** Alertas ativos (Red/Yellow) recebem atualizações automáticas no WhatsApp a cada **30 minutos**, contendo o resumo de raios por anel e o horário da próxima mensagem programada.
+4.  **Auto-Approve:** Tempestades com detecção de *Lightning Jump* (intensificação súbita > 2σ) e alta confiança de rastreamento são aprovadas automaticamente.
+5.  **Ciclo de Vida:**
+    *   **Ativo:** Monitoramento intensivo com atualizações periódicas.
+    *   **Resolvido:** Envio de mensagem de normalização ("Green") após dissipação ou afastamento da ameaça.
+    *   **Re-queuing:** Se as condições de risco retornarem após o encerramento, o sistema reabre o alerta para nova validação.
 
 ---
 
 ## 7. Infraestrutura de Mensageria
-A comunicação é feita via **WhatsApp API (Z-API)**, utilizando templates profissionais que incluem:
-*   Contagem de raios e distância mínima.
-*   Estimativa de chegada (ETA) e velocidade.
-*   Recomendações de segurança baseadas no nível de risco.
+A comunicação é feita via **WhatsApp API (Z-API)**, utilizando templates focados em clareza operacional:
+*   Contagem de raios segmentada por anéis (30/50/100/200km).
+*   Estimativa de chegada (ETA) validada e velocidade de deslocamento.
+*   Link direto para o mapa de monitoramento em tempo real.
