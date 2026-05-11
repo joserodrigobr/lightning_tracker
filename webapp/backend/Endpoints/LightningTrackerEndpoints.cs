@@ -8,10 +8,31 @@ public static class LightningTrackerEndpoints
 {
     public static IEndpointRouteBuilder MapLightningTrackerEndpoints(this IEndpointRouteBuilder app)
     {
+        app.MapGet("/api/status", (SystemStatusService status) => 
+        {
+            return Results.Json(new {
+                sync = status.LastSync,
+                nowcast = status.LastNowcast,
+                logs = status.RecentLogs.ToArray()
+            });
+        });
+
         app.MapGet("/api/takers", async (ServiceTakerRepository repo, CancellationToken ct) =>
         {
             var takers = await repo.GetAllAsync(ct);
             return Results.Json(takers);
+        });
+
+        app.MapGet("/api/nowcast", async (
+            HttpRequest request,
+            PythonNowcastService nowcastService,
+            CancellationToken ct
+        ) =>
+        {
+            var takerId = GetIntQuery(request, "takerId");
+            int? tid = takerId > 0 ? takerId : null;
+            var report = await nowcastService.GetNowcastAsync(tid, ct);
+            return Results.Json(report);
         });
 
         app.MapGet("/api/takers/active", async (PythonActivityService activityService, CancellationToken ct) =>

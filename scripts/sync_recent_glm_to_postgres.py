@@ -75,7 +75,8 @@ def _ingest_file(conn, nc_path: Path, logger, bucket: str) -> tuple[bool, int, i
         cur.close()
 
     flashes_points = extract_points_from_lcfa(str(nc_path), kind="flash")
-    events_points = extract_points_from_lcfa(str(nc_path), kind="event")
+    # Events are skipped for performance - Flashes are enough for Sentinel engine.
+    # events_points = extract_points_from_lcfa(str(nc_path), kind="event")
 
     flashes_list: list[dict[str, object]] = []
     for _, row in flashes_points.df.iterrows():
@@ -84,15 +85,6 @@ def _ingest_file(conn, nc_path: Path, logger, bucket: str) -> tuple[bool, int, i
             "longitude": row["lon"],
             "event_time": row["time"].isoformat() if hasattr(row["time"], "isoformat") else str(row["time"]),
             "kind": "flash",
-        })
-
-    events_list: list[dict[str, object]] = []
-    for _, row in events_points.df.iterrows():
-        events_list.append({
-            "latitude": row["lat"],
-            "longitude": row["lon"],
-            "event_time": row["time"].isoformat() if hasattr(row["time"], "isoformat") else str(row["time"]),
-            "kind": "event",
         })
 
     # We only need metadata (source_url, source_time) in raw_files — not the binary blob.
@@ -108,10 +100,8 @@ def _ingest_file(conn, nc_path: Path, logger, bucket: str) -> tuple[bool, int, i
 
     if flashes_list:
         db.insert_events(conn, flashes_list, raw_file_id=raw_id)
-    if events_list:
-        db.insert_events(conn, events_list, raw_file_id=raw_id)
 
-    return False, len(flashes_list), len(events_list)
+    return False, len(flashes_list), 0
 
 
 def main() -> int:
@@ -159,6 +149,12 @@ def main() -> int:
         # Incremental: small overlap to be safe
         overlap = int(getattr(settings, "fetch_overlap_seconds", 10))
         start_utc = last_fetched - timedelta(seconds=overlap)
+        
+        # CAP: Never look back more than 1 hour in incremental mode to avoid infinite catch-up
+        max_lookback = now_utc - timedelta(hours=1)
+        if start_utc < max_lookback:
+            logger.warning("Last fetch was too long ago (%s). Capping lookback to 1 hour to stay real-time.", last_fetched.isoformat())
+            start_utc = max_lookback
 
     downloader = GLMDownloader(
         bucket=settings.aws_bucket,
@@ -180,6 +176,7 @@ def main() -> int:
             try:
                 already, flashes_count, events_count = _ingest_file(conn, path, logger, settings.aws_bucket)
                 if not already:
+                    logger.info("Ingested %s: %d flashes, %d events", path.name, flashes_count, events_count)
                     try:
                         st = _parse_source_time(path.name)
                         if st is None:

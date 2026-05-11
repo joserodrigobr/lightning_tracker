@@ -1,291 +1,209 @@
-# Lightning Tracker Backend API
+# 🔧 Backend — Lightning Tracker Web API
 
-## Overview
+> API .NET 8 que orquestra processos Python, serve dados ao frontend e gerencia alertas em tempo real.
 
-The backend is an ASP.NET Core 8 REST API (`LightningTracker.WebApi`) that serves as the bridge between the React frontend and Python data processing services.
+---
 
-**Key Responsibilities:**
-- HTTP API endpoints for rendering lightning visualizations
-- Service taker (tomador de serviço) management
-- Integration with PostgreSQL for data storage and retrieval
-- Orchestration of Python subprocesses for render operations
-- Table generation and data aggregation
+## Stack Tecnológico
 
-## Endpoints
+| Tecnologia | Versão | Função |
+|---|---|---|
+| .NET | 8.0 | Runtime Web API |
+| Npgsql | 8.0.8 | Driver PostgreSQL |
+| Microsoft.Data.Sqlite | 8.0.8 | Driver SQLite |
+| Python | 3.11+ | Subprocessos de renderização e sync |
 
-### Taker Management
-- `GET /api/takers` - List all service takers (tomadores de serviço)
-- `GET /api/takers/active` - Get the current default/active taker
+---
 
-### Rendering
-- `GET /api/render` - Render full visualization (lightning points + optional background)
-  - Query params: `takerId`, `mode` (1-5), `startLocal`, `endLocal`, `initialLoadHours`, `background` (0/1)
-  - Returns: PNG image with metadata headers
-
-- `GET /api/render/frame` - Render frame/snapshot (faster, no cache)
-  - Query params: Same as `/api/render` + `thumb` (0/1 for thumbnail mode)
-  - Returns: PNG image (thumbnail variant if requested)
-
-### Tables
-- `GET /api/tables/generate` - Generate aggregated data tables
-  - Query params: `takerId`, `endLocal`
-  - Returns: JSON table data
-
-## Architecture
-
-### Two Workflows: Legacy vs Modern
-
-#### Legacy Workflow (Deprecated)
-- **Entry Point:** `core.py` CLI
-- **Flow:** Local file → matplotlib visualization → GUI display
-- **Storage:** Minimal PostgreSQL usage; mostly in-memory
-- **Use Case:** Development, single-user analysis
-- **Status:** ⚠️ Not recommended for production
-
-#### Modern Workflow (Recommended)
-- **Entry Point:** Web API (`Program.cs` / `LightningTrackerEndpoints.cs`)
-- **Flow:**
-  1. `Program.cs` starts the automatic GLM sync hosted service
-  2. `sync_recent_glm_to_postgres.py` downloads GLM files from AWS S3
-  3. `extract_points_from_lcfa()` parses NetCDF → lat/lon/time
-  4. `db.insert_events()` stores raw blob + normalized events in PostgreSQL
-  5. API `/api/render` request → `PythonRenderService`
-  6. Python subprocess loads points from PostgreSQL → renders with matplotlib
-  7. PNG returned to frontend
-
-- **Storage:** PostgreSQL (raw_files table stores compressed NetCDF blobs; lightning_events table stores normalized points)
-- **Use Case:** Production, multi-user, web-based
-- **Status:** ✅ Production-ready
-
-### Data Lifecycle
+## 📁 Estrutura
 
 ```
-[AWS S3 NOAA] 
-    ↓ (boto3 download)
-[data/raw/glm_20s_goes/*.nc files]
-    ↓ (sync_recent_glm_to_postgres.py)
-[netCDF4 parsing]
-    ↓ (extract_points_from_lcfa)
-[PostgreSQL: raw_files + lightning_events]
-    ↓ (API /api/render)
-[Python subprocess: web_render.py]
-    ↓ (matplotlib render)
-[PNG image] → Frontend
-    ↓ (optional cleanup)
-[deleted if older than cleanup_days_old]
+webapp/backend/
+├── Program.cs                      # ⭐ Entry point — registra serviços e endpoints
+├── LightningTracker.WebApi.csproj  # Projeto .NET 8
+├── appsettings.json                # Configuração (paths, sync, python)
+├── Endpoints/
+│   ├── LightningTrackerEndpoints.cs # ⭐ Todos os endpoints HTTP (Minimal API)
+│   └── RenderQuery.cs               # Record de normalização de parâmetros de render
+├── Models/
+│   ├── LightningEvent.cs            # Record: Id, Kind, EventTime, Lat, Lon, Intensity
+│   ├── ServiceTaker.cs              # Record: Id, Name, Lat, Lon
+│   └── TableResponses.cs            # Record: resposta de tabela gerada
+├── Services/
+│   ├── ConfigurationService.cs      # ⭐ Configuração centralizada (env vars + appsettings)
+│   ├── GlmSyncHostedService.cs      # ⭐ Background worker — sync GLM→PostgreSQL
+│   ├── LightningDataService.cs      # ⭐ Queries PostgreSQL com filtro Haversine
+│   ├── PythonRenderService.cs       # Invoca web_render.py (PNG/MP4)
+│   ├── PythonTableService.cs        # Invoca web_tables.py (tabelas de frequência)
+│   ├── PythonBackgroundService.cs   # Invoca web_background.py (background IR local)
+│   ├── PythonAbiService.cs          # Invoca web_abi_tile.py (tile ABI full-disk)
+│   ├── PythonActivityService.cs     # Invoca web_auto_select.py (tomador ativo)
+│   └── TableCatalogService.cs       # Catálogo de tabelas salvas (filesystem + PG)
+├── Workers/
+│   └── LightningAlertWorker.cs      # ⭐ Motor de alertas WhatsApp (Sentinel)
+├── Data/
+│   └── ServiceTakerRepository.cs    # Repositório de tomadores (SQLite + CSV fallback)
+└── db/
+    ├── init_schema_postgres.sql     # Schema completo PostgreSQL + PostGIS
+    ├── schema.sql                   # Schema simplificado (service_takers)
+    ├── service_takers.sqlite        # Banco SQLite de tomadores
+    └── alert_contacts.json          # Lista de contatos para alertas WhatsApp
 ```
 
-### Services
+---
 
-#### `PythonRenderService` (`Services/PythonRenderService.cs`)
-- Spawns Python subprocess running `web_render.py`
-- Passes parameters: `takerId`, `mode`, `startLocal`, `endLocal`, background flag, thumbnail flag
-- Loads lightning points from PostgreSQL
-- Returns PNG + metadata (render time, point count, etc.)
+## 🌐 Endpoints da API
 
-#### `ConfigurationService` (`Services/ConfigurationService.cs`)
-- Loads `appsettings.json` at startup
-- Exposes configuration to other services
-- Handles environment variable overrides
+### Dados
+| Método | Rota | Descrição | Params |
+|--------|------|-----------|--------|
+| GET | `/api/takers` | Lista todos os tomadores | — |
+| GET | `/api/takers/active` | Tomador ativo por padrão | — |
+| GET | `/api/events` | Eventos de relâmpagos (JSON) | `takerId`, `mode`, `startLocal`, `endLocal`, `initialLoadHours` |
 
-#### `ServiceTakerRepository` (`Data/ServiceTakerRepository.cs`)
-- Database access for tomadores_de_servico table
-- Caches service taker list in memory for fast lookups
+### Renderização (Python subprocess)
+| Método | Rota | Descrição | Params |
+|--------|------|-----------|--------|
+| GET | `/api/render` | Mapa PNG (Matplotlib) | `takerId`, `mode`, `startLocal`, `endLocal`, `background`, `binMinutes` |
+| GET | `/api/render/frame` | Frame único PNG | Igual a render + `thumb` |
+| GET | `/api/render/animation` | Animação MP4 | `takerId`, `mode`, `startLocal`, `endLocal`, `binMinutes` |
 
-#### `PythonActivityService` (`Services/PythonActivityService.cs`)
-- Monitors active Python renders (process tracking)
-- Allows selection of default taker based on current activity
+### Imagem Satélite
+| Método | Rota | Descrição | Params |
+|--------|------|-----------|--------|
+| GET | `/api/background` | Background IR recortado (por tomador) | `takerId`, `endLocal` |
+| GET | `/api/abi` | Tile ABI IR full-disk (reprojetado) | `utc`, `cmap` |
 
-#### `PythonTableService` (`Services/PythonTableService.cs`)
-- Spawns Python for table generation
-- Aggregates lightning events by geographic regions/time windows
+### Tabelas
+| Método | Rota | Descrição | Params |
+|--------|------|-----------|--------|
+| GET | `/api/tables/generate` | Gera tabela de frequência | `takerId`, `endLocal`, `period`, `binSize` |
+| GET | `/api/tables/latest` | Lista tabelas salvas | `takerId`, `limit` |
+| GET | `/api/tables/load` | Carrega tabela salva | `relativePath` |
 
-#### `TableCatalogService` (`Services/TableCatalogService.cs`)
-- Maintains index of generated tables
-- Serves pre-generated table metadata
+---
 
-## Configuration
+## ⚡ Serviços Críticos
 
-### `appsettings.json`
+### `GlmSyncHostedService`
+Background worker que executa `sync_recent_glm_to_postgres.py` periodicamente.
+
+```
+Ciclo: a cada 300s (configurável)
+  1. Executa Python com --lookback-minutes e --retention-hours
+  2. Python baixa GLM recentes do S3 → insere no PostgreSQL
+  3. Purga blobs antigos além da janela de retenção
+  4. Limpa arquivos .nc locais se cleanup_enabled=true
+```
+
+**Configuração** (`appsettings.json`):
 ```json
 {
-  "Logging": {
-    "LogLevel": { "Default": "Information" }
-  },
-  "PythonSettings": {
-    "ScriptsDir": "../../src",
-    "RenderScript": "web_render.py",
-    "TableScript": "web_tables.py",
-    "Timeout": "00:02:00"
-  },
-  "DatabaseSettings": {
-    "ConnectionString": "Host=localhost;Port=5432;Database=lightning_tracker;..."
+  "Sync": {
+    "Enabled": true,
+    "IntervalSeconds": 300,
+    "LookbackMinutes": 5,
+    "RetentionHours": 3,
+    "KeepRawFiles": false
   }
 }
 ```
 
-### Environment Variables
-- `LIGHTNING_TRACKER_PG_DSN` - PostgreSQL connection string (overrides appsettings)
-- `LIGHTNING_TRACKER_PYTHON_TIMEOUT` - Render timeout in seconds (default: 120)
-- `LIGHTNING_TRACKER_SYNC_ENABLED` - Enables or disables the automatic GLM sync hosted service
-- `LIGHTNING_TRACKER_SYNC_INTERVAL_SECONDS` - Delay between sync iterations
-- `LIGHTNING_TRACKER_SYNC_LOOKBACK_MINUTES` - Window refreshed by each sync iteration
-- `LIGHTNING_TRACKER_SYNC_RETENTION_HOURS` - Retention window for raw blobs in PostgreSQL
-- `LIGHTNING_TRACKER_SYNC_KEEP_RAW_FILES` - Keeps downloaded raw `.nc` files when set to `true`
-- `ASPNETCORE_ENVIRONMENT` - Environment: Development, Staging, Production
+### `LightningAlertWorker` (Sentinel)
+Motor de alertas em tempo real via WhatsApp (Z-API).
 
-## Dependencies
-
-### External Services
-- **PostgreSQL** - Data persistence (required)
-  - Tables: `raw_files`, `lightning_events`, `tomadores_de_servico`, etc.
-  - Retention: raw_files kept for 3-24 hours (configurable); events indefinite
-
-- **Python 3.11+** - Render subprocess
-  - Scripts: `web_render.py`, `web_tables.py`
-  - Dependencies: `netCDF4`, `numpy`, `pandas`, `matplotlib`, `psycopg2`
-
-### NuGet Packages
-- `Npgsql` - PostgreSQL driver
-- `Serilog` - Structured logging
-- `Dapper` (optional) - Micro-ORM for queries
-
-### Python Packages (called via subprocess)
-See `../requirements.txt` for full list. Critical:
-- `psycopg2-binary` - PostgreSQL connection
-- `netCDF4` - NetCDF file parsing
-- `matplotlib` - Image rendering
-- `numpy`, `pandas` - Data manipulation
-
-## Cleanup & Retention Policy
-
-### Raw .nc Files
-- **Location:** `data/raw/glm_20s_goes/`, `data/raw/abi_ir/`
-- **Retention:** 3 days (configurable via `config/settings.yaml`: `cleanup_days_old`)
-- **Trigger:** `sync_recent_glm_to_postgres.py` runs with `--keep-raw-files=false` (default)
-- **Impact:** ✅ Safe — Data already in PostgreSQL (`raw_files.compressed_blob`)
-- **Command:** `python scripts/sync_recent_glm_to_postgres.py` (automatic cleanup)
-
-### PostgreSQL Raw File Blobs
-- **Table:** `raw_files` (stores original NetCDF gzip-compressed)
-- **Retention:** 24 hours (via `delete_raw_files_older_than()` in `sync_recent_glm_to_postgres.py`)
-- **Purpose:** Recoverability if events need re-parsing
-
-### PNG Cache
-- **Status:** ❌ REMOVED (deprecated)
-- **Reason:** Cache hit rate <10%; disk I/O overhead > benefit; renders always fresh from PostgreSQL
-- **Previous Location:** `webapp/backend/cache/render_frames/` (now deleted)
-
-### Lightning Events
-- **Table:** `lightning_events`
-- **Retention:** Indefinite (data scientifically valuable)
-- **Growth Rate:** ~1GB/30 days (100k events/day)
-
-## Performance Characteristics
-
-### Typical Timings (per `/api/render` call)
-| Operation | Duration |
-|-----------|----------|
-| PostgreSQL query (load points) | 50-150ms |
-| Matplotlib render (matplotlib) | 10-30s (varies by point count) |
-| Network + Python subprocess overhead | 200-500ms |
-| **Total** | **~10-30 seconds** |
-
-### Query Optimization
-- `lightning_events` table indexed on `takerId`, `event_time` for fast range queries
-- `raw_files` indexed on `source_url`, `source_time` for dedup checks
-
-### Storage Projections (30-day window)
-- Raw `.nc` files: ~10GB → deleted after 3 days
-- PostgreSQL `raw_files`: ~3-5GB (compressed NetCDF)
-- PostgreSQL `lightning_events`: ~1-2GB
-- Total disk with cleanup: **~5-10GB** ✅ (vs. **121GB** without cleanup)
-
-### Scaling Recommendations
-- PostgreSQL: 2+ CPU cores, 4GB+ RAM, SSD for wal_log
-- Backend API: 1-2 CPU cores, 1GB RAM; horizontal scale behind load balancer
-- Python subprocesses: 1 CPU core per concurrent render (limit to 2-4)
-
-## Troubleshooting
-
-### API Returns 500 Error
-- Check PostgreSQL connection: `LIGHTNING_TRACKER_PG_DSN` set correctly
-- Check Python environment: Verify `web_render.py` runs standalone
-- Review `stderr` from Python subprocess in logs
-
-### Slow Render
-- Check PostgreSQL query time with EXPLAIN PLAN
-- Reduce `initialLoadHours` (limits points loaded)
-- Use thumbnail mode (`thumb=1`) for faster feedback
-
-### Raw Files Not Cleaned Up
-- Verify `cleanup_enabled: true` in `config/settings.yaml`
-- Check cron job for `sync_recent_glm_to_postgres.py` is running
-- Use `--keep-raw-files` flag to disable cleanup during debugging
-
-## Building & Running
-
-### Prerequisites
-```bash
-# Backend
-dotnet --version  # Should be 8.0+
-
-# Python
-python --version  # Should be 3.11+
-pip install -r requirements.txt
+```
+Ciclo: a cada 2 minutos
+  1. Para cada tomador com contatos em alert_contacts.json:
+  2. Busca eventos dos últimos 10 min (raio 500km)
+  3. Calcula distância mínima via Haversine
+  4. Determina nível de alerta:
+     🔴 Red:       ≤ 100km  → atualização em tempo real
+     🟡 Yellow:    100-200km → atualização a cada 20min
+     ⚠️ Observing: 200-500km → atualização a cada 60min
+     ✅ Green:     20min sem atividade → encerramento
+  5. Envia mensagem formatada via Z-API WhatsApp
 ```
 
-### Build
-```bash
-cd webapp/backend
-dotnet build
+**Templates de mensagem**:
+- **Observing**: Notificação de tempestade na região
+- **Yellow**: Dados de proximidade + previsão 30min
+- **Red**: Alerta urgente + previsão 15min + instrução de abrigo
+- **Green**: Condições normalizadas
+
+### `LightningDataService`
+Acesso direto ao PostgreSQL com filtragem espacial.
+
+```
+Estratégia de query:
+  1. Bounding box SQL (filtro rápido aproximado)
+  2. Haversine em C# (filtro preciso circular)
+  3. takerId=0 → busca América do Sul inteira (bbox: -60/15 lat, -90/-30 lon)
 ```
 
-### Run
-```bash
-# Development (watch mode)
-dotnet watch
-
-# Production
-dotnet publish -c Release
-dotnet LightningTracker.WebApi.dll
+### `ServiceTakerRepository`
 ```
-
-### Run with Custom Settings
-```bash
-export LIGHTNING_TRACKER_PG_DSN="Host=prod-db;Port=5432;Database=tracker;..."
-export ASPNETCORE_ENVIRONMENT=Production
-dotnet LightningTracker.WebApi.dll
+Prioridade de fonte de dados:
+  1. SQLite (db/service_takers.sqlite) — tabela tomadores_servico
+  2. CSV fallback (config/service_takers.csv) — separador ";"
+  3. ID=0 → virtual "América do Sul" (lat=-14, lon=-52)
 ```
-
-## Development Workflow
-
-### Adding a New Endpoint
-1. Create handler method in `Endpoints/LightningTrackerEndpoints.cs`
-2. Use `app.MapGet()` or `app.MapPost()` to register route
-3. Inject dependencies (services resolve from DI container)
-4. Return `Results.Json()`, `Results.File()`, or `Results.NotFound()`
-5. Test via `curl` or frontend
-
-### Adding a Service
-1. Create class in `Services/` directory
-2. Register in `Program.cs`: `builder.Services.AddSingleton<MyService>()`
-3. Inject in endpoints or other services via constructor
-
-### Running Tests
-```bash
-cd webapp/backend
-dotnet test
-```
-
-## Related Documentation
-
-- [Parent Project README](../../README.md) - Overview of Lightning Tracker
-- [Python Processing Pipeline](../../src/) - Data extraction, storage logic
-- [Frontend README](../frontend/README.md) - React UI documentation
-- [API Tables Documentation](../../docs/TABLES_AND_API.md) - API reference
 
 ---
 
-**Last Updated:** 2024  
-**Maintainer:** Lightning Tracker Dev Team
+## ⚙️ Configuração
+
+### `appsettings.json`
+```json
+{
+  "Data": {
+    "ServiceTakersDbPath": "db/service_takers.sqlite",
+    "TablesRootPath": "..\\..\\output\\tables"
+  },
+  "Python": {
+    "Command": "python",
+    "WorkingDirectory": "..\\.."
+  }
+}
+```
+
+### Variáveis de Ambiente (override)
+Todas as configs de `ConfigurationService` podem ser sobrescritas por env vars:
+
+| Env Var | appsettings Key | Default |
+|---|---|---|
+| `LIGHTNING_TRACKER_PG_DSN` | `Data:PostgresDsn` | — |
+| `LIGHTNING_TRACKER_PYTHON_CMD` | `Python:Command` | `python` |
+| `LIGHTNING_TRACKER_SYNC_ENABLED` | `Sync:Enabled` | `true` |
+| `LIGHTNING_TRACKER_SYNC_INTERVAL_SECONDS` | `Sync:IntervalSeconds` | `300` |
+
+---
+
+## 🔌 Integração com Python
+
+O backend C# invoca scripts Python via `System.Diagnostics.Process`:
+
+```
+Python Working Directory: ../../  (raiz do lightning_tracker)
+
+Scripts invocados:
+  - scripts/sync_recent_glm_to_postgres.py  → GlmSyncHostedService
+  - scripts/web_abi_tile.py                 → PythonAbiService
+  - src/web_render.py                       → PythonRenderService (via -m)
+  - src/web_tables.py                       → PythonTableService (via -m)
+  - src/web_background.py                   → PythonBackgroundService (via -m)
+  - src/web_auto_select.py                  → PythonActivityService (via -m)
+```
+
+Protocolo de comunicação: **stdout** (bytes PNG/JSON) + **stderr** (logs).
+Headers de metadados são passados via linhas prefixadas (ex: `BOUNDS:lat,lon,lat,lon`).
+
+---
+
+## 🚀 Execução
+
+```bash
+cd webapp/backend
+dotnet run                           # Dev (porta 5080)
+dotnet run --urls http://0.0.0.0:5080  # Produção
+```

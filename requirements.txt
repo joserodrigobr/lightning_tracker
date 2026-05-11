@@ -18,3 +18,6 @@ psycopg2-binary>=2.9
 pg8000>=1.31
 xarray>=2023.10
 zarr>=2.15
+
+# Nowcast engine deps
+scikit-learn>=1.3

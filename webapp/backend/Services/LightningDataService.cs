@@ -53,7 +53,9 @@ public class LightningDataService
             if (key == "dbname") key = "Database";
             else if (key == "user") key = "Username";
             return $"{key}={val}";
-        })) + ";";
+        })) + ";Timeout=30;CommandTimeout=30;";
+
+        _logger.LogInformation("Buscando eventos para taker {TakerName} (ID {TakerId}) entre {Start} e {End}...", taker.Name, taker.Id, startUtc.ToString("HH:mm:ss"), endUtc.ToString("HH:mm:ss"));
 
         // Bounding box for rough filtering in SQL
         double dLat = maxRadiusKm / 111.0;
@@ -115,10 +117,12 @@ public class LightningDataService
                         break;
                 }
             }
+            
+            _logger.LogInformation("Busca concluída: {Count} eventos encontrados para o taker {TakerId}.", events.Count, taker.Id);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to fetch events from PostgreSQL");
+            _logger.LogError(ex, "Falha ao buscar eventos no PostgreSQL para o taker {TakerId}.", taker.Id);
         }
 
         // Return sorted ascending by time

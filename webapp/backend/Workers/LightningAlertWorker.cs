@@ -36,6 +36,7 @@ public class LightningAlertWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await Task.Yield(); // Yield control back to the host startup
         _logger.LogInformation("Sistema Sentinel de Alertas da BlueOcean iniciado e em monitoramento real.");
 
         while (!stoppingToken.IsCancellationRequested)
@@ -58,10 +59,15 @@ public class LightningAlertWorker : BackgroundService
         using var scope = _serviceProvider.CreateScope();
         var repo = scope.ServiceProvider.GetRequiredService<ServiceTakerRepository>();
         var dataService = scope.ServiceProvider.GetRequiredService<LightningDataService>();
+        var nowcastService = scope.ServiceProvider.GetRequiredService<PythonNowcastService>();
         
         var takers = await repo.GetAllAsync(ct);
         var contacts = await LoadContactsAsync(ct);
         if (contacts == null || !contacts.Any()) return;
+
+        // Fetch global nowcast report once per cycle
+        var nowcast = await nowcastService.GetNowcastAsync(null, ct);
+        _logger.LogInformation("[SENTINEL] Iniciando ciclo de varredura para {TakerCount} tomadores. Nowcast Global obtido.", takers.Count);
 
         foreach (var taker in takers)
         {
@@ -69,6 +75,7 @@ public class LightningAlertWorker : BackgroundService
             if (!takerContacts.Any()) continue;
 
             var now = DateTime.UtcNow;
+            _logger.LogDebug("[SENTINEL] Analisando taker {TakerName}...", taker.Name);
             // Increased range to 500km to capture 'Observing' events beyond 200km
             var recentEvents = (await dataService.GetEventsAsync(taker, now.AddMinutes(-10), now, 500.0, "flash", 1000, ct)).ToList();
             
@@ -92,7 +99,8 @@ public class LightningAlertWorker : BackgroundService
                         // Escalation
                         session.CurrentLevel = targetLevel;
                         session.MessagesSentInLevel = 0;
-                        await SendAlertToContactsAsync(taker, takerContacts, recentEvents, minDistance, targetLevel, true, ct);
+                        var impact = nowcast.Impacts.FirstOrDefault(i => i.TakerId == taker.Id);
+                        await SendAlertToContactsAsync(taker, takerContacts, recentEvents, minDistance, targetLevel, impact, ct);
                         session.MessagesSentInLevel++;
                         session.LastUpdateTime = now;
                     }
@@ -104,7 +112,8 @@ public class LightningAlertWorker : BackgroundService
 
                         if (shouldUpdate)
                         {
-                            await SendAlertToContactsAsync(taker, takerContacts, recentEvents, minDistance, session.CurrentLevel, session.MessagesSentInLevel == 0, ct);
+                            var impact = nowcast.Impacts.FirstOrDefault(i => i.TakerId == taker.Id);
+                            await SendAlertToContactsAsync(taker, takerContacts, recentEvents, minDistance, session.CurrentLevel, impact, ct);
                             session.MessagesSentInLevel++;
                             session.LastUpdateTime = now;
                         }
@@ -116,7 +125,7 @@ public class LightningAlertWorker : BackgroundService
                     if ((now - session.LastLightningTime).TotalMinutes >= 20)
                     {
                         _logger.LogInformation("Sentinel: Enviando encerramento para {Name} por inatividade.", taker.Name);
-                        await SendAlertToContactsAsync(taker, takerContacts, new List<LightningEvent>(), 0, AlertLevel.None, true, ct);
+                        await SendAlertToContactsAsync(taker, takerContacts, new List<LightningEvent>(), 0, AlertLevel.None, null, ct);
                         _activeSessions.Remove(taker.Id);
                     }
                 }
@@ -133,18 +142,19 @@ public class LightningAlertWorker : BackgroundService
                     ClosestDistance = minDistance
                 };
 
+                var impact = nowcast.Impacts.FirstOrDefault(i => i.TakerId == taker.Id);
                 if (targetLevel == AlertLevel.Red)
                 {
                     // Exception: Immediate Red
-                    await SendAlertToContactsAsync(taker, takerContacts, recentEvents, minDistance, AlertLevel.Observing, true, ct);
+                    await SendAlertToContactsAsync(taker, takerContacts, recentEvents, minDistance, AlertLevel.Observing, impact, ct);
                     await Task.Delay(2000, ct); 
-                    await SendAlertToContactsAsync(taker, takerContacts, recentEvents, minDistance, AlertLevel.Red, true, ct);
+                    await SendAlertToContactsAsync(taker, takerContacts, recentEvents, minDistance, AlertLevel.Red, impact, ct);
                     newSession.CurrentLevel = AlertLevel.Red;
                     newSession.MessagesSentInLevel = 1;
                 }
                 else 
                 {
-                    await SendAlertToContactsAsync(taker, takerContacts, recentEvents, minDistance, AlertLevel.Observing, true, ct);
+                    await SendAlertToContactsAsync(taker, takerContacts, recentEvents, minDistance, AlertLevel.Observing, impact, ct);
                     newSession.CurrentLevel = AlertLevel.Observing;
                     newSession.MessagesSentInLevel = 1;
                 }
@@ -179,7 +189,7 @@ public class LightningAlertWorker : BackgroundService
         return JsonSerializer.Deserialize<List<AlertContact>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     }
 
-    private async Task SendAlertToContactsAsync(ServiceTaker taker, List<AlertContact> contacts, List<LightningEvent> events, double minDistance, AlertLevel level, bool showPrediction, CancellationToken ct)
+    private async Task SendAlertToContactsAsync(ServiceTaker taker, List<AlertContact> contacts, List<LightningEvent> events, double minDistance, AlertLevel level, NowcastImpact? impact, CancellationToken ct)
     {
         int c30 = 0, c50 = 0, c100 = 0, c200 = 0;
         foreach (var evt in events)
@@ -197,7 +207,7 @@ public class LightningAlertWorker : BackgroundService
             try
             {
                 if (!string.IsNullOrEmpty(contact.Phone))
-                    await SendWhatsAppAsync(contact, taker.Name, events.Count, minDistance, countsSummary, level, showPrediction);
+                    await SendWhatsAppAsync(contact, taker.Name, events.Count, minDistance, countsSummary, level, impact);
             }
             catch (Exception ex)
             {
@@ -206,7 +216,7 @@ public class LightningAlertWorker : BackgroundService
         }
     }
 
-    private async Task SendWhatsAppAsync(AlertContact contact, string unitName, int count, double minDistance, string countsSummary, AlertLevel level, bool showPrediction)
+    private async Task SendWhatsAppAsync(AlertContact contact, string unitName, int count, double minDistance, string countsSummary, AlertLevel level, NowcastImpact? impact)
     {
         var instanceId = "3F2C681BEBCAF1933F5DEAAA29470FA9"; 
         var instanceToken = "6D478E447558779AE85FEEF8";
@@ -220,8 +230,8 @@ public class LightningAlertWorker : BackgroundService
 
         string messageText = level switch {
             AlertLevel.Observing => GetObservingTemplate(contact.Name, unitName),
-            AlertLevel.Yellow => GetYellowTemplate(contact.Name, unitName, count, minDistance, countsSummary, showPrediction),
-            AlertLevel.Red => GetRedTemplate(contact.Name, unitName, count, minDistance, countsSummary, showPrediction),
+            AlertLevel.Yellow => GetYellowTemplate(contact.Name, unitName, count, minDistance, countsSummary, impact),
+            AlertLevel.Red => GetRedTemplate(contact.Name, unitName, count, minDistance, countsSummary, impact),
             AlertLevel.None => GetGreenTemplate(contact.Name, unitName),
             _ => ""
         };
@@ -249,11 +259,11 @@ Nossa equipe está em vigilância. Caso o tempo mude ou a atividade se aproxime,
 📍 Acompanhe ao vivo: http://nowcast.blueocean.com";
     }
 
-    private string GetYellowTemplate(string contactName, string unitName, int count, double minDistance, string countsSummary, bool showPrediction)
+    private string GetYellowTemplate(string contactName, string unitName, int count, double minDistance, string countsSummary, NowcastImpact? impact)
     {
-        string statusText = showPrediction 
-            ? "\n\n💡 *Previsão:* Existe a probabilidade de ocorrência de relâmpagos em *30 minutos* na região."
-            : "\n\n💡 *Status:* O alerta amarelo irá se manter por mais *30 minutos*, exceto que mude para alerta vermelho.";
+        string statusText = impact != null
+            ? $"\n\n💡 *Previsão Sentinel:* Tempestade se deslocando a {impact.VelocityKmh:F0} km/h na direção {impact.BearingLabel}. Chegada estimada em *{impact.EtaMinutes} minutos* no raio de {impact.RingKm}km."
+            : "\n\n💡 *Status:* Monitoramento ativo. Enviaremos atualizações caso a atividade se intensifique.";
         
         return $@"🟡 *ALERTA AMARELO*
 
@@ -270,9 +280,11 @@ Olá {contactName}!
 Continuaremos enviando atualizações conforme a proximidade dos eventos.";
     }
 
-    private string GetRedTemplate(string contactName, string unitName, int count, double minDistance, string countsSummary, bool showPrediction)
+    private string GetRedTemplate(string contactName, string unitName, int count, double minDistance, string countsSummary, NowcastImpact? impact)
     {
-        string prediction = showPrediction ? "\n\n💡 *Previsão:* Existe a probabilidade de ocorrência de relâmpagos em *15 minutos*." : "";
+        string prediction = impact != null
+            ? $"\n\n💡 *Previsão Sentinel:* Impacto iminente. Tempestade a {impact.VelocityKmh:F0} km/h em direção à unidade. ETA: *{impact.EtaMinutes} minutos*."
+            : "";
 
         return $@"🔴 *ALERTA VERMELHO*
 

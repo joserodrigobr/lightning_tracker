@@ -6,6 +6,7 @@ namespace LightningTracker.WebApi.Services;
 public sealed class GlmSyncHostedService : BackgroundService
 {
     private readonly ConfigurationService _config;
+    private readonly SystemStatusService _status;
     private readonly ILogger<GlmSyncHostedService> _logger;
     private readonly string _pythonCommand;
     private readonly string _workingDirectory;
@@ -13,10 +14,11 @@ public sealed class GlmSyncHostedService : BackgroundService
     private readonly string _scriptPath;
     private readonly string? _postgresDsn;
 
-    public GlmSyncHostedService(ConfigurationService config, IHostEnvironment env, ILogger<GlmSyncHostedService> logger)
+    public GlmSyncHostedService(ConfigurationService config, IHostEnvironment env, ILogger<GlmSyncHostedService> logger, SystemStatusService status)
     {
         _config = config;
         _logger = logger;
+        _status = status;
         _pythonCommand = config.GetPythonCommand();
         _workingDirectory = ResolvePath(env.ContentRootPath, config.GetPythonWorkingDirectory());
         _settingsPath = "D:\\lightning_data\\settings_sync.yaml";
@@ -26,6 +28,7 @@ public sealed class GlmSyncHostedService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await Task.Yield();
         if (!_config.GetGlmSyncEnabled())
         {
             _logger.LogInformation("GLM sync hosted service is disabled by configuration.");
@@ -144,8 +147,29 @@ public sealed class GlmSyncHostedService : BackgroundService
         }
 
         _logger.LogInformation("GLM sync process started: pid={ProcessId}, wd={WorkingDirectory}", proc.Id, psi.WorkingDirectory);
+        _status.SetSyncRunning(true);
 
-        var stdoutTask = DrainStreamAsync(proc.StandardOutput, line => _logger.LogInformation("[GLM-SYNC] {Line}", line), cancellationToken);
+        int files = 0, skipped = 0, flashes = 0, events = 0;
+
+        var stdoutTask = DrainStreamAsync(proc.StandardOutput, line => {
+            _logger.LogInformation("[GLM-SYNC] {Line}", line);
+            _status.AddLog($"[SYNC] {line}"); // Add live progress to status dashboard
+            // Example log: Synced 15 files (10 skipped, 1000 flashes, 5000 events)
+            if (line.Contains("Synced") && line.Contains("files"))
+            {
+                var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                // "Synced 15 files (10 skipped, 1000 flashes, 5000 events)..."
+                // Usually parts are: [0]=Synced [1]=15 [2]=files [3]=(10 [4]=skipped, [5]=1000 [6]=flashes, [7]=5000 [8]=events)
+                try {
+                    if (int.TryParse(parts[1], out var f)) files = f;
+                    if (parts.Length > 3) {
+                        int.TryParse(parts[3].TrimStart('('), out skipped);
+                        int.TryParse(parts[5], out flashes);
+                        int.TryParse(parts[7], out events);
+                    }
+                } catch {}
+            }
+        }, cancellationToken);
         var stderrTask = DrainStreamAsync(proc.StandardError, line => _logger.LogWarning("[GLM-SYNC] {Line}", line), cancellationToken);
 
         await proc.WaitForExitAsync(cancellationToken);
@@ -153,9 +177,11 @@ public sealed class GlmSyncHostedService : BackgroundService
 
         if (proc.ExitCode != 0)
         {
+            _status.UpdateSync(0, 0, 0, 0, $"Exit code {proc.ExitCode}");
             throw new InvalidOperationException($"GLM sync Python process exited with code {proc.ExitCode}.");
         }
 
+        _status.UpdateSync(files, skipped, flashes, events);
         _logger.LogInformation("GLM sync process completed successfully.");
     }
 

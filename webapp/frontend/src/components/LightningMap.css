@@ -144,3 +144,18 @@
 .lt-map-dl-btn svg {
   flex-shrink: 0;
 }
+
+/* Nowcast Tooltip */
+.lt-nowcast-tooltip {
+  padding: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #333;
+}
+
+.lt-nowcast-tooltip strong {
+  color: #ff3d00;
+  display: block;
+  margin-bottom: 2px;
+  font-size: 13px;
+}

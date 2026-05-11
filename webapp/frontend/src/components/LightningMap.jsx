@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef } from 'react'
-import { MapContainer, TileLayer, Circle, CircleMarker, Marker, ImageOverlay, Rectangle, useMap } from 'react-leaflet'
+import { useEffect, useMemo, useRef, Fragment } from 'react'
+import { MapContainer, TileLayer, Circle, CircleMarker, Marker, ImageOverlay, Rectangle, Polygon, Polyline, Tooltip, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { jetColor } from '../utils/haversine'
 import './LightningMap.css'
@@ -57,6 +57,7 @@ export default function LightningMap({
   initialLoadHours,
   markerInterval,
   visMode,
+  nowcast,
 }) {
   const now = new Date()
   const isSouthAmerica = taker && taker.id === 0
@@ -237,6 +238,75 @@ export default function LightningMap({
             );
           });
         })()}
+
+        {/* Nowcast Visualization — Cells, Hulls, and Vectors */}
+        {nowcast && nowcast.cells && nowcast.cells.map((cell) => {
+          const hullPoints = cell.hullLat && cell.hullLat.length >= 3
+            ? cell.hullLat.map((lat, i) => [lat, cell.hullLon[i]])
+            : null;
+          
+          const projections = cell.projections || [];
+          const next15 = projections.find(p => p.minutes === 15);
+          
+          return (
+            <Fragment key={`nowcast-${cell.cellId}`}>
+              {/* Storm Cell Hull */}
+              {hullPoints && (
+                <Polygon
+                  positions={hullPoints}
+                  pathOptions={{
+                    color: '#ff3d00',
+                    weight: 2,
+                    fillColor: '#ff3d00',
+                    fillOpacity: 0.2,
+                  }}
+                >
+                  <Tooltip sticky>
+                    <div className="lt-nowcast-tooltip">
+                      <strong>Célula {cell.cellId.split('_')[1]}</strong><br/>
+                      ⚡ {cell.flashCount} raios<br/>
+                      📏 {cell.areaKm2} km²<br/>
+                      🚀 {cell.velocityKmh} km/h ({cell.bearingLabel})
+                    </div>
+                  </Tooltip>
+                </Polygon>
+              )}
+
+              {/* Displacement Vector (Seta) */}
+              {next15 && (
+                <Polyline
+                  positions={[
+                    [cell.centroidLat, cell.centroidLon],
+                    [next15.lat, next15.lon]
+                  ]}
+                  pathOptions={{
+                    color: '#ffffff',
+                    weight: 3,
+                    dashArray: '5, 5',
+                    opacity: 0.8,
+                  }}
+                />
+              )}
+
+              {/* Future Projections (15, 30, 60 min) */}
+              {projections.map((proj, i) => (
+                <CircleMarker
+                  key={`proj-${cell.cellId}-${proj.minutes}`}
+                  center={[proj.lat, proj.lon]}
+                  radius={4 + i * 2}
+                  pathOptions={{
+                    color: '#ffffff',
+                    fillColor: '#ffea00',
+                    fillOpacity: 0.4 + (1 - i * 0.2),
+                    weight: 1,
+                  }}
+                >
+                  <Tooltip>Impacto em {proj.minutes} min</Tooltip>
+                </CircleMarker>
+              ))}
+            </Fragment>
+          );
+        })}
       </MapContainer>
 
       {/* Metadata overlay (top center) */}

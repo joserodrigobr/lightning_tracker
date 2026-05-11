@@ -7,6 +7,7 @@ import ControlPanel from './components/ControlPanel'
 import StatsPanel from './components/StatsPanel'
 import SideMenu from './components/SideMenu'
 import { useEvents } from './hooks/useEvents'
+import { useNowcast } from './hooks/useNowcast'
 import { useAbiOverlay } from './hooks/useAbiOverlay'
 import DataRequestModal from './components/DataRequestModal'
 import ChartModal from './components/ChartModal'
@@ -137,6 +138,12 @@ function App() {
     endLocal: normalizeDateTimeLocal(endLocal),
     initialLoadHours,
     refreshIntervalMs: 60_000,
+  })
+
+  // ─── Nowcast hook ───
+  const { nowcast, loading: nowcastLoading } = useNowcast({
+    takerId,
+    refreshIntervalMs: 120_000, // Nowcast is heavier, update every 2 min
   })
 
   // ─── ABI overlay hook ───
@@ -471,10 +478,7 @@ function App() {
     setLastUpdateLocal(new Date().toLocaleTimeString('pt-BR'))
   }, [takerId])
 
-  // Current frame time for animation clock
-  const animFrameTime = frames.length > 0 && frames[frameIndex]?.ts
-    ? frames[frameIndex].ts
-    : null
+
 
   return (
     <div className="lt-app">
@@ -546,6 +550,7 @@ function App() {
               onDownloadAnim={downloadAnimation}
               lastUpdateLocal={lastUpdateLocal}
               initialLoadHours={initialLoadHours}
+              nowcast={nowcast}
             />
           ) : (
             <div className="lt-info-badge">
