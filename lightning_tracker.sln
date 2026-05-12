@@ -1,0 +1,32 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "webapp", "webapp", "{7E50A06F-A38B-7BE7-1137-409223B8AEF0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backend", "backend", "{C0D77B32-1471-73FB-0E42-821A14C99D44}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightningTracker.WebApi", "webapp\backend\LightningTracker.WebApi.csproj", "{FD4A073E-726C-EFB7-34EE-8F3218A0138E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FD4A073E-726C-EFB7-34EE-8F3218A0138E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD4A073E-726C-EFB7-34EE-8F3218A0138E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD4A073E-726C-EFB7-34EE-8F3218A0138E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD4A073E-726C-EFB7-34EE-8F3218A0138E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C0D77B32-1471-73FB-0E42-821A14C99D44} = {7E50A06F-A38B-7BE7-1137-409223B8AEF0}
+		{FD4A073E-726C-EFB7-34EE-8F3218A0138E} = {C0D77B32-1471-73FB-0E42-821A14C99D44}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8EF4B7B9-FE40-4E6A-AEFF-F5091538919F}
+	EndGlobalSection
+EndGlobal
