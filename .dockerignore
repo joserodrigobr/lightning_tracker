@@ -3,6 +3,11 @@ __pycache__/
 .venv/
 .pytest_cache/
 .ipynb_checkpoints/
+.git/
+.vs/
+**/bin/
+**/obj/
+*.lscache
 data/
 logs/
 output/

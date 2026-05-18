@@ -1,0 +1,36 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+ 
+WORKDIR /app
+ 
+RUN apt-get update \
+&& apt-get install -y --no-install-recommends python3 python3-pip python3-venv libgomp1 \
+&& rm -rf /var/lib/apt/lists/*
+ 
+COPY requirements.txt ./
+
+RUN python3 -m venv /opt/venv
+
+ENV PATH="/opt/venv/bin:${PATH}" \
+
+    PYTHONUNBUFFERED=1 \
+
+    PYTHONDONTWRITEBYTECODE=1 \
+
+    MPLBACKEND=Agg
+ 
+RUN pip install --no-cache-dir --upgrade pip \
+&& pip install --no-cache-dir -r requirements.txt
+ 
+COPY . .
+ 
+WORKDIR /app/webapp/backend
+
+RUN dotnet restore \
+&& dotnet publish -c Release -o /app/publish
+ 
+WORKDIR /app/publish
+
+EXPOSE 5080
+ 
+ENTRYPOINT ["dotnet", "LightningTracker.WebApi.dll"]
+ 
