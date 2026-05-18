@@ -16,6 +16,8 @@ import AlertDashboard from './components/AlertDashboard'
 
 
 const DEFAULT_RENDER_HOURS = 4
+const DEFAULT_RENDER_MODE = 2
+const DEFAULT_VIS_MODE = 'density'
 
 // Virtual taker for "all of South America" view
 const SOUTH_AMERICA_TAKER = { id: 0, name: 'América do Sul', lat: -14.0, lon: -52.0 }
@@ -84,7 +86,7 @@ function App() {
   const isLoadingTakersRef = useRef(false)
 
   const [takerId, setTakerId] = useState('0')
-  const [mode, setMode] = useState(1)
+  const [mode, setMode] = useState(DEFAULT_RENDER_MODE)
   const [startLocal, setStartLocal] = useState('')
   const [endLocal, setEndLocal] = useState('')
   const [initialLoadHours, setInitialLoadHours] = useState(DEFAULT_RENDER_HOURS)
@@ -95,7 +97,7 @@ function App() {
   const [showNowcast, setShowNowcast] = useState(false)
 
   const [markerInterval, setMarkerInterval] = useState(10)
-  const [visMode, setVisMode] = useState('points')
+  const [visMode, setVisMode] = useState(DEFAULT_VIS_MODE)
   const [lastUpdateLocal, setLastUpdateLocal] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [view, setView] = useState('map') // 'map' or 'alerts'
@@ -378,11 +380,23 @@ function App() {
     setPlaybackTime(null)
     setStartLocal('')
     setEndLocal('')
-    setVisMode('points')
+    setMode(DEFAULT_RENDER_MODE)
+    setVisMode(DEFAULT_VIS_MODE)
     setMarkerInterval(10)
     setAccumulatedMode(true)
     setBackgroundIr(false)
     setShowNowcast(false)
+  }
+
+  function changeVisMode(nextVisMode) {
+    if (nextVisMode === 'points' && String(takerId) === '0') return
+    setVisMode(nextVisMode)
+    setMode(nextVisMode === 'density' ? 2 : 1)
+  }
+
+  function changeTaker(nextTakerId) {
+    if (visMode === 'points' && String(nextTakerId) === '0') return
+    setTakerId(nextTakerId)
   }
 
   async function downloadCurrentImage() {
@@ -590,11 +604,11 @@ function App() {
               <ControlPanel
                 takers={takerOptions}
                 takerId={takerId}
-                onTakerChange={(id) => setTakerId(id)}
+                onTakerChange={changeTaker}
                 markerInterval={markerInterval}
                 onMarkerIntervalChange={setMarkerInterval}
                 visMode={visMode}
-                onVisModeChange={setVisMode}
+                onVisModeChange={changeVisMode}
                 startLocal={startLocal}
                 onStartLocalChange={setStartLocal}
                 endLocal={endLocal}
