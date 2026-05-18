@@ -1,76 +1,144 @@
 services:
+
   postgres:
+
     image: postgis/postgis:15-3.4-alpine
+
     container_name: lightning-postgres
+
     environment:
+
       POSTGRES_DB: sentinel_db
+
       POSTGRES_USER: sentinel_user
+
       POSTGRES_PASSWORD: sentinel_password
+
       TZ: America/Sao_Paulo
+
     volumes:
+
       - postgres_data:/var/lib/postgresql/data
+
       - ./webapp/backend/db/init_schema_postgres.sql:/docker-entrypoint-initdb.d/01-init-schema.sql:ro
+
     ports:
+
       - "5434:5432"
+
     healthcheck:
+
       test: ["CMD-SHELL", "pg_isready -U sentinel_user -d sentinel_db"]
+
       interval: 10s
+
       timeout: 5s
+
       retries: 5
-    restart: unless-stopped
-    networks:
-      - lightning-network
 
+    restart: unless-stopped
+
+    networks:
+
+      - lightning-network
+ 
   backend:
+
     build:
+
       context: .
+
       dockerfile: Dockerfile.backend
+
     container_name: lightning-backend
+
     environment:
+
       ASPNETCORE_ENVIRONMENT: Development
+
       TZ: America/Sao_Paulo
+
       LIGHTNING_TRACKER_PG_DSN: host=postgres port=5432 dbname=sentinel_db user=sentinel_user password=sentinel_password
+
       LIGHTNING_TRACKER_PYTHON_CMD: python
+
       LIGHTNING_TRACKER_SYNC_ENABLED: "true"
+
       LIGHTNING_TRACKER_SYNC_INTERVAL_SECONDS: "300"
+
       LIGHTNING_TRACKER_SYNC_LOOKBACK_MINUTES: "5"
+
       LIGHTNING_TRACKER_SYNC_RETENTION_HOURS: "3"
+
       Python__WorkingDirectory: /app
+
       Data__ServiceTakersDbPath: /app/webapp/backend/db/service_takers.sqlite
+
       Data__TablesRootPath: /app/output/tables
+
     volumes:
+
       - ./data:/app/data
+
       - ./output:/app/output
+
       - ./logs:/app/logs
+
       - ./config:/app/config
+
     ports:
+
       - "5080:5080"
+
     depends_on:
+
       postgres:
+
         condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - lightning-network
 
+    restart: unless-stopped
+
+    networks:
+
+      - lightning-network
+ 
   frontend:
+
     build:
+
       context: .
+
       dockerfile: Dockerfile.frontend
+
     container_name: lightning-frontend
+
     environment:
+
       VITE_API_PROXY_TARGET: http://backend:5080
+
       TZ: America/Sao_Paulo
+
     ports:
+
       - "5173:80"
+
     depends_on:
+
       - backend
+
     restart: unless-stopped
+
     networks:
+
       - lightning-network
-
+ 
 volumes:
-  postgres_data:
 
+  postgres_data:
+ 
 networks:
+
   lightning-network:
+
     driver: bridge
+ 

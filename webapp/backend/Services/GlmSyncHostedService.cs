@@ -21,7 +21,7 @@ public sealed class GlmSyncHostedService : BackgroundService
         _status = status;
         _pythonCommand = config.GetPythonCommand();
         _workingDirectory = ResolvePath(env.ContentRootPath, config.GetPythonWorkingDirectory());
-        _settingsPath = "D:\\lightning_data\\settings_sync.yaml";
+        _settingsPath = ResolvePath(_workingDirectory, "config", "settings.yaml");
         _scriptPath = ResolvePath(_workingDirectory, "scripts", "sync_recent_glm_to_postgres.py");
         _postgresDsn = config.GetPostgresDsn();
     }
