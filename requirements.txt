@@ -5,6 +5,7 @@ numpy>=1.24
 pandas>=2.0
 matplotlib>=3.8
 netCDF4>=1.6
+shapely>=2.1.0
 
 # Optional (satellite background overlay).
 pyproj>=3.6
