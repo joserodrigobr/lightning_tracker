@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { getAbiOverlay } from '../services/lightningService'
 
 /**
  * Hook to fetch and auto-refresh the ABI IR CH13 full-disk overlay tile from /api/abi.
@@ -36,7 +37,7 @@ export function useAbiOverlay({
       const qs = new URLSearchParams({ cmap, _ts: Date.now() })
       if (utcIso) qs.set('utc', utcIso)
 
-      const res = await fetch(`/api/abi?${qs}`)
+      const res = await getAbiOverlay(qs)
       console.log(`[ABI] Fetch response: ${res.status} ${res.ok ? 'OK' : 'Error'}`)
       if (!res.ok) throw new Error(`ABI tile error (${res.status})`)
 

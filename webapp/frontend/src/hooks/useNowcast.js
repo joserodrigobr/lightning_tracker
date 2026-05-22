@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { getNowcast } from '../services/lightningService'
 
 export function useNowcast({ takerId, refreshIntervalMs = 60_000 }) {
   const [nowcast, setNowcast] = useState(null)
@@ -18,7 +19,7 @@ export function useNowcast({ takerId, refreshIntervalMs = 60_000 }) {
       if (takerId && takerId !== '0') qs.set('takerId', takerId)
       qs.set('_ts', Date.now())
 
-      const res = await fetch(`/api/nowcast?${qs.toString()}`)
+      const res = await getNowcast(qs.toString())
       if (!res.ok) throw new Error(`Erro ao buscar nowcast (${res.status})`)
       const data = await res.json()
       setNowcast(data)

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { haversineKm } from '../utils/haversine'
+import { getEvents } from '../services/lightningService'
 
 const RADII = [30, 50, 100, 200]
 
@@ -19,6 +20,7 @@ export function useEvents({ takerId, taker, mode, startLocal, endLocal, initialL
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [stats, setStats] = useState({ total: 0, last5min: 0, byRing: [0, 0, 0, 0] })
+  const [lastFetchedAt, setLastFetchedAt] = useState(null)
   const inFlight = useRef(false)
 
   const fetchEvents = useCallback(async () => {
@@ -38,7 +40,7 @@ export function useEvents({ takerId, taker, mode, startLocal, endLocal, initialL
         initialLoadHours: initialLoadHours || 3,
         _ts: Date.now(),
       })
-      const res = await fetch(`/api/events?${qs}`)
+      const res = await getEvents(qs)
       if (!res.ok) throw new Error(`Erro ao buscar eventos (${res.status})`)
       const data = await res.json()
       const arr = Array.isArray(data) ? data : []
@@ -73,6 +75,7 @@ export function useEvents({ takerId, taker, mode, startLocal, endLocal, initialL
 
       const statsTotal = hasTakerLocation ? rings.reduce((a, b) => a + b, 0) : arr.length;
       setStats({ total: statsTotal, last5min: last5, byRing: rings })
+      setLastFetchedAt(new Date())
     } catch (e) {
       setError(String(e?.message || e))
       setEvents([])
@@ -114,5 +117,5 @@ export function useEvents({ takerId, taker, mode, startLocal, endLocal, initialL
     prevTotalRef.current = stats.total
   }, [stats.total, taker])
 
-  return { events, loading, error, stats, refetch: fetchEvents }
+  return { events, loading, error, stats, lastFetchedAt, refetch: fetchEvents }
 }
