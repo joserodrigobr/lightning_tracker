@@ -25,11 +25,6 @@
   filter: saturate(0.62) sepia(0.12) brightness(1.03);
 }
 
-.lt-theme-light .lt-map .lt-map-boundary-tile {
-  filter: grayscale(1) contrast(1.15);
-  mix-blend-mode: multiply;
-}
-
 /* Taker X icon */
 .lt-taker-icon {
   background: none !important;

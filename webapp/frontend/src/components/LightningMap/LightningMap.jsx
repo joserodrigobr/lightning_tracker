@@ -7,7 +7,6 @@ import './LightningMap.css'
 const TILE_LAYERS = {
   dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
   light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-  lightBoundaries: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lines/{z}/{x}/{y}{r}.png',
 }
 
 function createTakerIcon(theme) {
@@ -167,16 +166,6 @@ export default function LightningMap({
           maxZoom={20}
           className="lt-map-base-tile"
         />
-
-        {theme === 'light' && (
-          <TileLayer
-            key="light-boundaries"
-            url={TILE_LAYERS.lightBoundaries}
-            maxZoom={20}
-            opacity={0.28}
-            className="lt-map-boundary-tile"
-          />
-        )}
 
         {/* ABI IR CH13 background overlay */}
         {backgroundIr && abiUrl && leafletAbiBounds && (
