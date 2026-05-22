@@ -1,0 +1,161 @@
+/* App.css — Lightning Tracker redesign */
+
+.lt-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: var(--lt-bg); /* Dark sleek background */
+  color: var(--lt-text);
+}
+
+/* Main layout: map full screen, sidebar floats on top */
+.lt-main {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin-top: var(--lt-header-height);
+  background: var(--lt-bg);
+}
+
+/* Map column - now full screen */
+.lt-map-col {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* Sidebar column - now a floating box in the bottom-right */
+.lt-sidebar {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  width: var(--lt-sidebar-width);
+  max-height: calc(100vh - 120px);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0; /* Let inner panels handle padding */
+  min-height: 0;
+  overflow-y: auto;
+  background: transparent;
+  pointer-events: auto;
+  scrollbar-width: none; /* Hide scrollbar for cleaner look */
+  opacity: 1;
+  transform: translateX(0);
+  transition: transform 0.22s ease, opacity 0.18s ease;
+}
+
+.lt-sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+.lt-sidebar--closed {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(calc(100% + 36px));
+}
+
+.lt-sidebar-toggle {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  z-index: 120;
+  width: 38px;
+  height: 44px;
+  border: 1px solid var(--lt-panel-border);
+  border-radius: 10px;
+  background: var(--lt-panel-strong);
+  color: var(--lt-accent);
+  box-shadow: 0 8px 28px var(--lt-shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  transition: right 0.22s ease, background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.lt-sidebar-toggle:hover {
+  background: var(--lt-accent-soft);
+  border-color: var(--lt-accent);
+  transform: translateY(-1px);
+}
+
+.lt-sidebar-toggle--open {
+  right: calc(var(--lt-sidebar-width) + 32px);
+}
+
+.lt-sidebar-toggle--closed {
+  right: 24px;
+}
+
+/* Info badge (shown on map when loading) */
+.lt-info-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 900;
+  padding: 20px 28px;
+  background: rgba(13, 78, 107, 0.88);
+  backdrop-filter: blur(10px);
+  border-radius: 14px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  animation: lt-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes lt-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.lt-info-badge--warn {
+  background: rgba(120, 80, 10, 0.85);
+  animation: none;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .lt-main {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+  }
+
+  .lt-sidebar {
+    max-height: 45vh;
+    border-left: none;
+    border-top: 1px solid rgba(21, 96, 130, 0.15);
+  }
+
+  .lt-sidebar-toggle--open {
+    right: 24px;
+    bottom: calc(45vh + 32px);
+  }
+}
+
+.lt-theme-light .lt-info-badge {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--lt-panel-border);
+  color: var(--lt-text);
+  box-shadow: 0 8px 28px var(--lt-shadow);
+}
+
+.lt-theme-light .lt-info-badge--warn {
+  background: rgba(255, 247, 220, 0.92);
+  color: #6f4f00;
+}
