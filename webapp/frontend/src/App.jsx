@@ -1,23 +1,34 @@
-import './App.css'
+import './styles/layout.css'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import Header from './components/Header'
-import LightningMap from './components/LightningMap'
-import ControlPanel from './components/ControlPanel'
-import StatsPanel from './components/StatsPanel'
-import SideMenu from './components/SideMenu'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import Header from './components/Header/Header'
+import LightningMap from './components/LightningMap/LightningMap'
+import ControlPanel from './components/ControlPanel/ControlPanel'
+import StatsPanel from './components/StatsPanel/StatsPanel'
+import SideMenu from './components/SideMenu/SideMenu'
 import { useEvents } from './hooks/useEvents'
 import { useNowcast } from './hooks/useNowcast'
 import { useAbiOverlay } from './hooks/useAbiOverlay'
-import DataRequestModal from './components/DataRequestModal'
-import ChartModal from './components/ChartModal'
-import TableModal from './components/TableModal'
-import AlertDashboard from './components/AlertDashboard'
+import DataRequestModal from './components/DataRequestModal/DataRequestModal'
+import ChartModal from './components/ChartModal/ChartModal'
+import TableModal from './components/TableModal/TableModal'
+import AlertDashboard from './pages/AlertDashboard/AlertDashboard'
+import {
+  generateTableData,
+  getActiveTaker,
+  getLatestTables,
+  getSavedTable,
+  getTakers,
+  renderAnimation,
+  renderCurrentImage,
+} from './services/lightningService'
 
 
 const DEFAULT_RENDER_HOURS = 4
 const DEFAULT_RENDER_MODE = 2
 const DEFAULT_VIS_MODE = 'density'
+const EVENTS_REFRESH_INTERVAL_MS = 60_000
+const THEME_STORAGE_KEY = 'lightning-tracker-theme'
 
 // Virtual taker for "all of South America" view
 const SOUTH_AMERICA_TAKER = { id: 0, name: 'América do Sul', lat: -14.0, lon: -52.0 }
@@ -89,23 +100,29 @@ function App() {
   const [mode, setMode] = useState(DEFAULT_RENDER_MODE)
   const [startLocal, setStartLocal] = useState('')
   const [endLocal, setEndLocal] = useState('')
-  const [initialLoadHours, setInitialLoadHours] = useState(DEFAULT_RENDER_HOURS)
+  const [initialLoadHours] = useState(DEFAULT_RENDER_HOURS)
   const [backgroundIr, setBackgroundIr] = useState(false)
   const [showMap, setShowMap] = useState(true)
   const [showRings, setShowRings] = useState(true)
-  const [showAllTakers, setShowAllTakers] = useState(true)
   const [showNowcast, setShowNowcast] = useState(false)
 
   const [markerInterval, setMarkerInterval] = useState(10)
   const [visMode, setVisMode] = useState(DEFAULT_VIS_MODE)
-  const [lastUpdateLocal, setLastUpdateLocal] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [mapSidebarOpen, setMapSidebarOpen] = useState(true)
   const [view, setView] = useState('map') // 'map' or 'alerts'
+  const [theme, setTheme] = useState(() => {
+    try {
+      const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY)
+      return storedTheme === 'light' ? 'light' : 'dark'
+    } catch {
+      return 'dark'
+    }
+  })
 
   // Table state (preserved from original)
   const [tableData, setTableData] = useState(null)
   const [tableStatus, setTableStatus] = useState('')
-  const [tableError, setTableError] = useState('')
   const [isGeneratingTable, setIsGeneratingTable] = useState(false)
   const [savedTables, setSavedTables] = useState([])
 
@@ -119,7 +136,7 @@ function App() {
   const [animating, setAnimating] = useState(false)
   const [playbackTime, setPlaybackTime] = useState(null)
   const [accumulatedMode, setAccumulatedMode] = useState(false)
-  const [playbackSpeed, setPlaybackSpeed] = useState(1000) // ms per frame
+  const [playbackSpeed] = useState(1000) // ms per frame
 
   const autoSelectRequestedRef = useRef(false)
 
@@ -135,18 +152,18 @@ function App() {
   }, [takers])
 
   // ─── Events hook (new JSON API) ───
-  const { events, loading: eventsLoading, stats } = useEvents({
+  const { events, loading: eventsLoading, stats, lastFetchedAt } = useEvents({
     takerId,
     taker: selectedTaker,
     mode,
     startLocal: normalizeDateTimeLocal(startLocal),
     endLocal: normalizeDateTimeLocal(endLocal),
     initialLoadHours,
-    refreshIntervalMs: 60_000,
+    refreshIntervalMs: EVENTS_REFRESH_INTERVAL_MS,
   })
 
   // ─── Nowcast hook ───
-  const { nowcast, loading: nowcastLoading } = useNowcast({
+  const { nowcast } = useNowcast({
     takerId,
     refreshIntervalMs: 120_000, // Nowcast is heavier, update every 2 min
   })
@@ -173,7 +190,7 @@ function App() {
     isLoadingTakersRef.current = true
     setTakersError('')
     try {
-      const res = await fetch('/api/takers')
+      const res = await getTakers()
       if (!res.ok) throw new Error(`Falha ao carregar tomadores (${res.status})`)
       const data = await res.json()
       setTakers(Array.isArray(data) ? data : [])
@@ -229,7 +246,7 @@ function App() {
   }
 
   async function loadFallbackTaker() {
-    const res = await fetch('/api/active-taker')
+    const res = await getActiveTaker()
     if (res.ok) {
       const data = await res.json()
       if (data?.takerId) setTakerId(String(data.takerId))
@@ -243,7 +260,7 @@ function App() {
     if (!selectedTaker) return
     try {
       const qs = buildQuery({ takerId: selectedTaker.id, limit: 8, _ts: Date.now() })
-      const res = await fetch(`/api/tables/latest?${qs}`)
+      const res = await getLatestTables(qs)
       if (!res.ok) throw new Error(`Falha ao listar tabelas (${res.status})`)
       const data = await res.json()
       setSavedTables(Array.isArray(data) ? data : [])
@@ -256,7 +273,7 @@ function App() {
     if (!relativePath) return
     try {
       const qs = buildQuery({ relativePath, _ts: Date.now() })
-      const res = await fetch(`/api/tables/load?${qs}`)
+      const res = await getSavedTable(qs)
       if (!res.ok) throw new Error(`Falha ao carregar tabela (${res.status})`)
       const data = await res.json()
       setTableData(data)
@@ -280,7 +297,7 @@ function App() {
         binSize,
         _ts: Date.now() 
       })
-      const res = await fetch(`/api/tables/generate?${qs}`)
+      const res = await generateTableData(qs)
       if (!res.ok) throw new Error(`Falha ao gerar tabela (${res.status})`)
       const data = await res.json()
       
@@ -323,7 +340,7 @@ function App() {
         binSize,
         _ts: Date.now() 
       })
-      const res = await fetch(`/api/tables/generate?${qs}`)
+      const res = await generateTableData(qs)
       if (!res.ok) throw new Error(`Falha ao obter dados do gráfico (${res.status})`)
       const data = await res.json()
       
@@ -343,7 +360,7 @@ function App() {
     }
   }
 
-  function downloadCurrentTableCsv(type) {
+  function downloadCurrentTableCsv() {
     // If tableData exists, download it; otherwise just close menu
     if (!tableData?.values4x24?.length) return
     const csv = buildTableCsv(tableData)
@@ -393,6 +410,10 @@ function App() {
     setMode(nextVisMode === 'density' ? 2 : 1)
   }
 
+  function toggleTheme() {
+    setTheme((currentTheme) => (currentTheme === 'dark' ? 'light' : 'dark'))
+  }
+
   function changeTaker(nextTakerId) {
     setTakerId(nextTakerId)
   }
@@ -417,7 +438,7 @@ function App() {
         showPolygon: 0, // Clean look as requested
         _ts: Date.now(),
       })
-      const res = await fetch(`/api/render?${qs}`)
+      const res = await renderCurrentImage(qs)
       if (!res.ok) return
       const blob = await res.blob()
       triggerBrowserDownload(blob, filename)
@@ -449,7 +470,7 @@ function App() {
         _ts: Date.now(),
       })
       
-      const res = await fetch(`/api/render/animation?${qs}`)
+      const res = await renderAnimation(qs)
       if (!res.ok) {
         alert('Erro ao gerar animação. Verifique se o período não é muito longo.')
         return
@@ -486,19 +507,32 @@ function App() {
   useEffect(() => {
     if (takers.length === 0 || takerId) return
     loadDefaultTaker()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [takers, takerId])
 
   useEffect(() => {
     if (!selectedTaker) return
     loadSavedTables()
-    setLastUpdateLocal(new Date().toLocaleTimeString('pt-BR'))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [takerId])
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme)
+    } catch {
+      // Ignore storage errors; theme still works for the current session.
+    }
+  }, [theme])
 
 
 
   return (
-    <div className="lt-app">
-      <Header onMenuToggle={() => setMenuOpen((v) => !v)} />
+    <div className={`lt-app lt-theme-${theme}`}>
+      <Header
+        onMenuToggle={() => setMenuOpen((v) => !v)}
+        theme={theme}
+        onThemeToggle={toggleTheme}
+      />
 
       <SideMenu
         open={menuOpen}
@@ -570,10 +604,12 @@ function App() {
                   onStepForward={stepForward}
                   onDownloadImage={downloadCurrentImage}
                   onDownloadAnim={downloadAnimation}
-                  lastUpdateLocal={lastUpdateLocal}
+                  lastUpdateAt={lastFetchedAt}
+                  refreshIntervalMs={EVENTS_REFRESH_INTERVAL_MS}
                   initialLoadHours={initialLoadHours}
                   nowcast={nowcast}
                   showNowcast={showNowcast}
+                  theme={theme}
                 />
               ) : (
                 <div className="lt-info-badge">
@@ -598,7 +634,22 @@ function App() {
             </div>
 
             {/* Sidebar */}
-            <aside className="lt-sidebar">
+            <button
+              type="button"
+              className={`lt-sidebar-toggle ${mapSidebarOpen ? 'lt-sidebar-toggle--open' : 'lt-sidebar-toggle--closed'}`}
+              onClick={() => setMapSidebarOpen((open) => !open)}
+              aria-expanded={mapSidebarOpen}
+              aria-controls="lt-map-sidebar"
+              title={mapSidebarOpen ? 'Recolher painel' : 'Abrir painel'}
+            >
+              <span aria-hidden="true">{mapSidebarOpen ? '›' : '‹'}</span>
+            </button>
+
+            <aside
+              id="lt-map-sidebar"
+              className={`lt-sidebar ${mapSidebarOpen ? 'lt-sidebar--open' : 'lt-sidebar--closed'}`}
+              aria-hidden={!mapSidebarOpen}
+            >
               <ControlPanel
                 takers={takerOptions}
                 takerId={takerId}
