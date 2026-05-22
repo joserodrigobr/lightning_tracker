@@ -1,0 +1,31 @@
+.lt-app {
+  --lt-bg: #0f172a;
+  --lt-panel: rgba(15, 23, 42, 0.4);
+  --lt-panel-strong: rgba(15, 23, 42, 0.6);
+  --lt-panel-border: rgba(255, 255, 255, 0.1);
+  --lt-text: #ffffff;
+  --lt-text-muted: rgba(255, 255, 255, 0.6);
+  --lt-label: #888;
+  --lt-control-bg: rgba(255, 255, 255, 0.05);
+  --lt-control-bg-hover: rgba(255, 255, 255, 0.08);
+  --lt-control-border: rgba(255, 255, 255, 0.1);
+  --lt-accent: #00e5ff;
+  --lt-accent-soft: rgba(0, 229, 255, 0.1);
+  --lt-shadow: rgba(0, 0, 0, 0.4);
+}
+
+.lt-theme-light {
+  --lt-bg: #eef4f8;
+  --lt-panel: rgba(255, 255, 255, 0.84);
+  --lt-panel-strong: rgba(255, 255, 255, 0.92);
+  --lt-panel-border: rgba(15, 78, 107, 0.16);
+  --lt-text: #0f172a;
+  --lt-text-muted: rgba(15, 23, 42, 0.62);
+  --lt-label: #4b6475;
+  --lt-control-bg: rgba(255, 255, 255, 0.76);
+  --lt-control-bg-hover: rgba(231, 246, 250, 0.9);
+  --lt-control-border: rgba(15, 78, 107, 0.18);
+  --lt-accent: #008db3;
+  --lt-accent-soft: rgba(0, 141, 179, 0.12);
+  --lt-shadow: rgba(15, 78, 107, 0.16);
+}
