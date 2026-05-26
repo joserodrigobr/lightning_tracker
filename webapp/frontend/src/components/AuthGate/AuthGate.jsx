@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { checkExternalAuthorization } from '../../services/externalAuthService'
 import './AuthGate.css'
 
-function UnauthorizedContent() {
+const LOGIN_URL = 'https://previsoesbrblueocean.com.br/login'
+
+function RedirectingContent() {
   return (
     <main className="lt-auth-page" aria-live="polite">
-      <h1>Conteudo nao autorizado</h1>
+      <h1>Redirecionando para login...</h1>
     </main>
   )
 }
@@ -18,7 +20,14 @@ function AuthGate({ children }) {
 
     checkExternalAuthorization().then((isAuthorized) => {
       if (!isActive) return
-      setAuthorizationStatus(isAuthorized ? 'authorized' : 'unauthorized')
+
+      if (!isAuthorized) {
+        setAuthorizationStatus('unauthorized')
+        window.location.replace(LOGIN_URL)
+        return
+      }
+
+      setAuthorizationStatus('authorized')
     })
 
     return () => {
@@ -31,7 +40,7 @@ function AuthGate({ children }) {
   }
 
   if (authorizationStatus === 'unauthorized') {
-    return <UnauthorizedContent />
+    return <RedirectingContent />
   }
 
   return children
