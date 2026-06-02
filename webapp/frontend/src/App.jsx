@@ -610,6 +610,7 @@ function App() {
                   nowcast={nowcast}
                   showNowcast={showNowcast}
                   theme={theme}
+                  onTakerSelect={changeTaker}
                 />
               ) : (
                 <div className="lt-info-badge">

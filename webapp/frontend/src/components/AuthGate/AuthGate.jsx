@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { checkExternalAuthorization } from '../../services/externalAuthService'
 import './AuthGate.css'
 
-const LOGIN_URL = 'https://previsoesbrblueocean.com.br/login'
+const LOGIN_URL = import.meta.env.VITE_LOGIN_URL || 'https://previsoesbrblueocean.com.br/login'
 
 function RedirectingContent() {
   return (

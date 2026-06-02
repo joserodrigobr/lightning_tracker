@@ -29,6 +29,13 @@
 .lt-taker-icon {
   background: none !important;
   border: none !important;
+  cursor: pointer;
+}
+
+.lt-taker-tooltip {
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 /* Metadata overlay (top center of map) */

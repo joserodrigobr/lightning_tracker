@@ -87,6 +87,7 @@ export default function LightningMap({
   nowcast,
   showNowcast,
   theme = 'dark',
+  onTakerSelect,
 }) {
   const now = new Date()
   const isSouthAmerica = taker && taker.id === 0
@@ -201,7 +202,18 @@ export default function LightningMap({
         {showRings && (showAllTakers && allTakers ? allTakers : (taker ? [taker] : []))
           .filter(t => t.id !== 0)
           .map((t) => (
-            <Marker key={`marker-${t.id}`} position={[t.lat, t.lon]} icon={takerIcon} />
+            <Marker
+              key={`marker-${t.id}`}
+              position={[t.lat, t.lon]}
+              icon={takerIcon}
+              eventHandlers={{
+                click: () => onTakerSelect?.(String(t.id)),
+              }}
+            >
+              <Tooltip direction="top" offset={[0, -12]} opacity={1} sticky>
+                <span className="lt-taker-tooltip">{t.name}</span>
+              </Tooltip>
+            </Marker>
           ))}
 
         {/* Lightning events - Point Mode */}
