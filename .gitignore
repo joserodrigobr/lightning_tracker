@@ -81,6 +81,7 @@ python_stderr_debug.txt
 *.db-shm
 *.db-wal
 *.nc
+data/.fetch_state.json
 data/raw/
 data/processed/
 
