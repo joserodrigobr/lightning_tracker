@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using LightningTracker.WebApi.Data;
 
 namespace LightningTracker.WebApi.Services;
 
@@ -10,18 +11,22 @@ public sealed class PythonActivityService
     private readonly string _settingsPath;
     private readonly string _sqlitePath;
     private readonly string _contentRoot;
+    private readonly ServiceTakerRepository _serviceTakerRepository;
 
-    public PythonActivityService(ConfigurationService config, IHostEnvironment env)
+    public PythonActivityService(ConfigurationService config, IHostEnvironment env, ServiceTakerRepository serviceTakerRepository)
     {
         _pythonCommand = config.GetPythonCommand();
         _workingDirectory = config.GetPythonWorkingDirectory();
         _settingsPath = Path.Combine(config.GetPythonWorkingDirectory(), "config", "settings.yaml");
         _sqlitePath = config.GetServiceTakersDbPath();
         _contentRoot = env.ContentRootPath;
+        _serviceTakerRepository = serviceTakerRepository;
     }
 
     public async Task<ActiveTakerSelection> GetDefaultTakerAsync(CancellationToken cancellationToken)
     {
+        await _serviceTakerRepository.GetAllAsync(cancellationToken);
+
         var args = new List<string>
         {
             "-m",

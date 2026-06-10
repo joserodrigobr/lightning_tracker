@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using LightningTracker.WebApi.Data;
 using LightningTracker.WebApi.Models;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -15,8 +16,15 @@ public sealed class PythonNowcastService
     private readonly IMemoryCache _cache;
     private readonly SystemStatusService _status;
     private readonly ILogger<PythonNowcastService> _logger;
+    private readonly ServiceTakerRepository _serviceTakerRepository;
 
-    public PythonNowcastService(ConfigurationService config, IHostEnvironment env, IMemoryCache cache, ILogger<PythonNowcastService> logger, SystemStatusService status)
+    public PythonNowcastService(
+        ConfigurationService config,
+        IHostEnvironment env,
+        IMemoryCache cache,
+        ILogger<PythonNowcastService> logger,
+        SystemStatusService status,
+        ServiceTakerRepository serviceTakerRepository)
     {
         _config = config;
         _status = status;
@@ -26,6 +34,7 @@ public sealed class PythonNowcastService
         _contentRoot = env.ContentRootPath;
         _cache = cache;
         _logger = logger;
+        _serviceTakerRepository = serviceTakerRepository;
     }
 
     public async Task<NowcastReport> GetNowcastAsync(int? takerId, CancellationToken cancellationToken)
@@ -37,6 +46,8 @@ public sealed class PythonNowcastService
         {
             return cachedReport;
         }
+
+        await _serviceTakerRepository.GetAllAsync(cancellationToken);
 
         var args = new List<string>
         {
