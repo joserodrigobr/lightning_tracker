@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient();
 builder.Services.AddSingleton<ConfigurationService>();
 builder.Services.AddSingleton<SystemStatusService>();
 builder.Services.AddSingleton<ServiceTakerRepository>();
@@ -20,6 +21,7 @@ builder.Services.AddSingleton<PythonNowcastService>();
 builder.Services.AddSingleton<LightningDataService>();
 builder.Services.AddSingleton<PendingAlertRepository>();
 builder.Services.AddSingleton<WhatsAppService>();
+builder.Services.AddSingleton<DataRequestEmailService>();
 builder.Services.AddHostedService<GlmSyncHostedService>();
 builder.Services.AddHostedService<LightningAlertWorker>();
 
