@@ -37,3 +37,13 @@ export function renderCurrentImage(queryString) {
 export function renderAnimation(queryString) {
   return fetch(`/api/render/animation?${queryString}`)
 }
+
+export function submitDataRequest(payload) {
+  return fetch('/api/data-requests', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+}
