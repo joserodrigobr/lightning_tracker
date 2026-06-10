@@ -555,6 +555,7 @@ function App() {
         isOpen={dataRequestOpen}
         onClose={() => setDataRequestOpen(false)}
         selectedTaker={selectedTaker}
+        takerOptions={takerOptions}
       />
 
       <ChartModal
