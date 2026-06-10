@@ -69,6 +69,34 @@ public class ConfigurationService
     }
 
     /// <summary>
+    /// Gets the forecast system units integration API URL.
+    /// </summary>
+    public string? GetForecastUnitsApiUrl()
+    {
+        var envValue = Environment.GetEnvironmentVariable("LIGHTNING_TRACKER_FORECAST_UNITS_API_URL");
+        if (!string.IsNullOrWhiteSpace(envValue))
+        {
+            return envValue.Trim();
+        }
+
+        return _configuration.GetValue<string>("Integrations:ForecastUnits:ApiUrl");
+    }
+
+    /// <summary>
+    /// Gets the shared integration key used to call the forecast system units API.
+    /// </summary>
+    public string? GetForecastUnitsApiKey()
+    {
+        var envValue = Environment.GetEnvironmentVariable("LIGHTNING_TRACKER_FORECAST_UNITS_API_KEY");
+        if (!string.IsNullOrWhiteSpace(envValue))
+        {
+            return envValue.Trim();
+        }
+
+        return _configuration.GetValue<string>("Integrations:ForecastUnits:ApiKey");
+    }
+
+    /// <summary>
     /// Gets whether the GLM sync service should start automatically.
     /// </summary>
     public bool GetGlmSyncEnabled()
