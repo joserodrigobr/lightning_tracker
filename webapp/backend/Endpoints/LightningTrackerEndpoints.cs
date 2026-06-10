@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Net.Mail;
 using System.Web;
 using LightningTracker.WebApi.Data;
 using LightningTracker.WebApi.Services;
@@ -373,6 +375,43 @@ public static class LightningTrackerEndpoints
                 : Results.Json(result);
         });
 
+        app.MapPost("/api/data-requests", async (
+            DataRequestEmailRequest? dataRequest,
+            ServiceTakerRepository repo,
+            DataRequestEmailService emailService,
+            CancellationToken ct
+        ) =>
+        {
+            if (dataRequest is null)
+                return Results.BadRequest(new { message = "Dados da solicitacao nao foram enviados." });
+
+            var errors = ValidateDataRequest(dataRequest, out var startTime, out var endTime);
+            if (errors.Count > 0)
+                return Results.BadRequest(new { message = "Verifique os campos do formulario.", errors });
+
+            var safeRequest = dataRequest with
+            {
+                Name = dataRequest.Name.Trim(),
+                Email = dataRequest.Email.Trim(),
+                TakerName = dataRequest.TakerName.Trim(),
+                DataType = dataRequest.DataType.Trim().ToLowerInvariant()
+            };
+
+            if (safeRequest.TakerId > 0)
+            {
+                var taker = await repo.GetByIdAsync(safeRequest.TakerId, ct);
+                if (taker is null)
+                    return Results.NotFound(new { message = "Tomador nao encontrado." });
+
+                safeRequest = safeRequest with { TakerName = taker.Name };
+            }
+
+            var result = await emailService.SendAsync(safeRequest, startTime, endTime, ct);
+            return result.Success
+                ? Results.Ok(new { message = result.Message })
+                : Results.Json(new { message = result.Message }, statusCode: StatusCodes.Status503ServiceUnavailable);
+        });
+
         // ── Pending & Active Alerts (Sentinela Operations) ──────────────────
         app.MapGet("/api/alerts/pending", async (PendingAlertRepository repo, CancellationToken ct) =>
         {
@@ -487,6 +526,56 @@ public static class LightningTrackerEndpoints
         var json = await File.ReadAllTextAsync(contactsPath, ct);
         var contacts = System.Text.Json.JsonSerializer.Deserialize<List<AlertContact>>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         return contacts?.Where(c => c.UnitName.Equals(takerName, StringComparison.OrdinalIgnoreCase)).ToList() ?? new List<AlertContact>();
+    }
+
+    private static IReadOnlyList<string> ValidateDataRequest(DataRequestEmailRequest request, out DateTime startTime, out DateTime endTime)
+    {
+        startTime = default;
+        endTime = default;
+
+        var errors = new List<string>();
+        if (string.IsNullOrWhiteSpace(request.Name))
+            errors.Add("Nome completo e obrigatorio.");
+
+        if (string.IsNullOrWhiteSpace(request.Email) || !IsValidEmail(request.Email.Trim()))
+            errors.Add("Informe um e-mail valido.");
+
+        if (request.TakerId < 0)
+            errors.Add("Tomador de servico invalido.");
+
+        if (string.IsNullOrWhiteSpace(request.TakerName))
+            errors.Add("Tomador de servico e obrigatorio.");
+
+        if (!DateTime.TryParse(request.StartTime, CultureInfo.InvariantCulture, DateTimeStyles.None, out startTime))
+            errors.Add("Tempo inicial invalido.");
+
+        if (!DateTime.TryParse(request.EndTime, CultureInfo.InvariantCulture, DateTimeStyles.None, out endTime))
+            errors.Add("Tempo final invalido.");
+
+        if (startTime != default && endTime != default && endTime <= startTime)
+            errors.Add("Tempo final deve ser posterior ao tempo inicial.");
+
+        if (!new[] { 1, 5, 15, 60 }.Contains(request.IntervalMinutes))
+            errors.Add("Intervalo acumulado invalido.");
+
+        var dataType = request.DataType?.Trim().ToLowerInvariant();
+        if (dataType is not ("flashes" or "eventos"))
+            errors.Add("Tipo de dado invalido.");
+
+        return errors;
+    }
+
+    private static bool IsValidEmail(string email)
+    {
+        try
+        {
+            var address = new MailAddress(email);
+            return address.Address.Equals(email, StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static int GetIntQuery(HttpRequest request, string key, int defaultValue = 0)
