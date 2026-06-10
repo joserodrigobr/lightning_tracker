@@ -49,6 +49,8 @@ coverage/
 # .NET backend
 bin/
 obj/
+obj_validate/
+**/obj_validate/
 TestResults/
 *.user
 *.rsuser
