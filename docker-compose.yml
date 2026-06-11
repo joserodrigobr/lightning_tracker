@@ -70,6 +70,24 @@ services:
 
       LIGHTNING_TRACKER_SYNC_RETENTION_HOURS: "3"
 
+      LIGHTNING_TRACKER_FORECAST_UNITS_API_URL: https://previsoesbrblueocean.com.br/api/integrations/lightning/units
+
+      LIGHTNING_TRACKER_FORECAST_UNITS_API_KEY: Dt%QfYRQ,_JirhUngd;mdkE6e
+
+      LIGHTNING_TRACKER_SMTP_HOST: smtp.gmail.com
+
+      LIGHTNING_TRACKER_SMTP_PORT: "587"
+
+      LIGHTNING_TRACKER_SMTP_USERNAME: metoceanbrblueocean@gmail.com
+
+      LIGHTNING_TRACKER_SMTP_PASSWORD: "ovyi rgvr ojao zduk"
+
+      LIGHTNING_TRACKER_SMTP_FROM: metoceanbrblueocean@gmail.com
+
+      LIGHTNING_TRACKER_DATA_REQUEST_TO: metoceanbrblueocean@gmail.com
+
+      LIGHTNING_TRACKER_SMTP_ENABLE_SSL: "true"
+
       Python__WorkingDirectory: /app
 
       Data__ServiceTakersDbPath: /app/webapp/backend/db/service_takers.sqlite
@@ -141,4 +159,3 @@ networks:
   lightning-network:
 
     driver: bridge
- 
