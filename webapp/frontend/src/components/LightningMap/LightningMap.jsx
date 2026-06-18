@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, Fragment } from 'react'
-import { MapContainer, TileLayer, Circle, CircleMarker, Marker, ImageOverlay, Rectangle, Polygon, Polyline, Tooltip, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Circle, Marker, ImageOverlay, Rectangle, Polygon, Polyline, Tooltip, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { jetColor } from '../../utils/haversine'
 import './LightningMap.css'
@@ -56,6 +56,106 @@ function MapController({ center, zoom }) {
   return null
 }
 
+function LightningCanvasLayer({ events, effectivePlaybackTime }) {
+  const map = useMap()
+  const canvasRef = useRef(null)
+  const frameRef = useRef(null)
+
+  useEffect(() => {
+    const canvas = L.DomUtil.create('canvas', 'lt-lightning-canvas')
+    canvas.style.position = 'absolute'
+    canvas.style.inset = '0'
+    canvas.style.zIndex = '450'
+    canvas.style.pointerEvents = 'none'
+    map.getContainer().appendChild(canvas)
+    canvasRef.current = canvas
+
+    return () => {
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current)
+        frameRef.current = null
+      }
+      canvas.remove()
+      canvasRef.current = null
+    }
+  }, [map])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return undefined
+
+    const draw = () => {
+      frameRef.current = null
+
+      const size = map.getSize()
+      const dpr = window.devicePixelRatio || 1
+      const width = Math.max(1, size.x)
+      const height = Math.max(1, size.y)
+      const pixelWidth = Math.round(width * dpr)
+      const pixelHeight = Math.round(height * dpr)
+
+      if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+        canvas.width = pixelWidth
+        canvas.height = pixelHeight
+        canvas.style.width = `${width}px`
+        canvas.style.height = `${height}px`
+      }
+
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.clearRect(0, 0, width, height)
+
+      for (const ev of events) {
+        if (!Number.isFinite(ev.latitude) || !Number.isFinite(ev.longitude)) continue
+
+        const point = map.latLngToContainerPoint([ev.latitude, ev.longitude])
+        if (point.x < -8 || point.x > width + 8 || point.y < -8 || point.y > height + 8) continue
+
+        const eventMs = new Date(ev.eventTime).getTime()
+        const ageMin = Math.max(0, (effectivePlaybackTime - eventMs) / 60000)
+        const t = Math.max(0, 1 - ageMin / 60)
+        const isNewFlash = ageMin < 5 && t > 0.8
+
+        ctx.beginPath()
+        ctx.arc(point.x, point.y, 5, 0, Math.PI * 2)
+        ctx.fillStyle = jetColor(t)
+        ctx.globalAlpha = 0.85
+        ctx.fill()
+
+        if (isNewFlash) {
+          ctx.beginPath()
+          ctx.arc(point.x, point.y, 8, 0, Math.PI * 2)
+          ctx.strokeStyle = jetColor(t)
+          ctx.globalAlpha = 0.35
+          ctx.lineWidth = 2
+          ctx.stroke()
+        }
+      }
+
+      ctx.globalAlpha = 1
+    }
+
+    const scheduleDraw = () => {
+      if (frameRef.current) return
+      frameRef.current = requestAnimationFrame(draw)
+    }
+
+    scheduleDraw()
+    map.on('move zoom resize moveend zoomend viewreset', scheduleDraw)
+
+    return () => {
+      map.off('move zoom resize moveend zoomend viewreset', scheduleDraw)
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current)
+        frameRef.current = null
+      }
+    }
+  }, [events, effectivePlaybackTime, map])
+
+  return null
+}
 export default function LightningMap({
   taker,
   allTakers,
@@ -116,7 +216,7 @@ export default function LightningMap({
   // Format metadata
   const effectiveStart = startLocal
     ? new Date(startLocal)
-    : new Date(now.getTime() - (initialLoadHours || 4) * 3600000)
+    : new Date(now.getTime() - (initialLoadHours || 3) * 3600000)
   const startLabel = effectiveStart.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
   const endLabel = endLocal
     ? new Date(endLocal).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
@@ -217,31 +317,12 @@ export default function LightningMap({
           ))}
 
         {/* Lightning events - Point Mode */}
-        {visMode === 'points' && filteredEvents.map((ev) => {
-          const eventMs = new Date(ev.eventTime).getTime()
-          const ageMin = Math.max(0, (effectivePlaybackTime - eventMs) / 60000)
-          
-          // Use jetColor based on age relative to a 60-minute window (or similar)
-          // Newest (0 min) -> t=1 (Yellow/Red), Oldest (60+ min) -> t=0 (Blue)
-          const maxAge = 60 
-          const t = Math.max(0, 1 - (ageMin / maxAge))
-
-          return (
-            <CircleMarker
-              key={ev.id}
-              center={[ev.latitude, ev.longitude]}
-              radius={5}
-              pathOptions={{
-                // Only blink if it's new AND high intensity (red/orange)
-                className: (ageMin < 5 && t > 0.8) ? 'lt-new-flash' : '',
-                color: 'transparent',
-                fillColor: jetColor(t),
-                fillOpacity: 0.85,
-              }}
-            />
-          )
-        })}
-
+        {visMode === 'points' && (
+          <LightningCanvasLayer
+            events={filteredEvents}
+            effectivePlaybackTime={effectivePlaybackTime}
+          />
+        )}
         {/* Lightning Density - Grid Mode (Flash/km²) */}
         {visMode === 'density' && (() => {
           const GRID_SIZE = 0.15; // Degrees (~16km cells)
@@ -391,3 +472,4 @@ export default function LightningMap({
     </div>
   )
 }
+
