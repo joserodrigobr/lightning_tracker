@@ -45,12 +45,14 @@ public sealed class GlmSyncHostedService : BackgroundService
         var interval = TimeSpan.FromSeconds(intervalSeconds);
         var lookbackMinutes = Math.Max(1, _config.GetGlmSyncLookbackMinutes());
         var retentionHours = Math.Max(1, _config.GetGlmSyncRetentionHours());
+        var initialLookbackMinutes = Math.Max(lookbackMinutes, _config.GetGlmSyncInitialLookbackMinutes());
         var keepRawFiles = _config.GetGlmSyncKeepRawFiles();
 
         _logger.LogInformation(
-            "Starting automatic GLM sync loop: interval={IntervalSeconds}s, lookback={LookbackMinutes}m, retention={RetentionHours}h, keepRawFiles={KeepRawFiles}, script={ScriptPath}",
+            "Starting automatic GLM sync loop: interval={IntervalSeconds}s, lookback={LookbackMinutes}m, initialLookback={InitialLookbackMinutes}m, retention={RetentionHours}h, keepRawFiles={KeepRawFiles}, script={ScriptPath}",
             intervalSeconds,
             lookbackMinutes,
+            initialLookbackMinutes,
             retentionHours,
             keepRawFiles,
             _scriptPath);
@@ -70,11 +72,13 @@ public sealed class GlmSyncHostedService : BackgroundService
                 }
             }
 
+            var isInitialRun = firstRun;
             firstRun = false;
 
             try
             {
-                await RunSyncOnceAsync(lookbackMinutes, retentionHours, keepRawFiles, stoppingToken);
+                var effectiveLookbackMinutes = isInitialRun ? initialLookbackMinutes : lookbackMinutes;
+                await RunSyncOnceAsync(effectiveLookbackMinutes, retentionHours, keepRawFiles, stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {

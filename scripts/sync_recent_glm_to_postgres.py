@@ -146,15 +146,10 @@ def main() -> int:
         refresh_minutes = max(initial_minutes, lookback_minutes)
         start_utc = now_utc - timedelta(minutes=refresh_minutes)
     else:
-        # Incremental: small overlap to be safe
-        overlap = int(getattr(settings, "fetch_overlap_seconds", 30))
-        start_utc = last_fetched - timedelta(seconds=overlap)
-        
-        # CAP: Never look back more than 1 hour in incremental mode to avoid infinite catch-up
-        max_lookback = now_utc - timedelta(hours=1)
-        if start_utc < max_lookback:
-            logger.warning("Last fetch was too long ago (%s). Capping lookback to 1 hour to stay real-time.", last_fetched.isoformat())
-            start_utc = max_lookback
+        # Incremental: always refresh the requested window. Normal cycles request a
+        # small 5-minute window; backend startup requests a larger 3-hour window to
+        # refill gaps after downtime without changing steady-state cost.
+        start_utc = now_utc - timedelta(minutes=lookback_minutes)
 
     downloader = GLMDownloader(
         bucket=settings.aws_bucket,
@@ -209,6 +204,11 @@ def main() -> int:
         total_events,
         deleted,
         retention_cutoff.isoformat(),
+    )
+    print(
+        f"Synced {len(result.downloaded)} files ({skipped} skipped, "
+        f"{total_flashes} flashes, {total_events} events)",
+        flush=True,
     )
 
     # Clean up raw .nc files if enabled

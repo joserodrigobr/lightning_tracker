@@ -95,7 +95,11 @@ class FetchTracker:
         if not v:
             return None
         try:
-            return datetime.fromisoformat(v).astimezone(timezone.utc)
+            dt = datetime.fromisoformat(v).astimezone(timezone.utc)
+            age_hours = (datetime.now(timezone.utc) - dt).total_seconds() / 3600
+            if age_hours > 1.0:
+                return None
+            return dt
         except Exception:
             return None
 

@@ -138,6 +138,17 @@ public class ConfigurationService
         return _configuration.GetValue("Sync:LookbackMinutes", 5);
     }
 
+
+    public int GetGlmSyncInitialLookbackMinutes()
+    {
+        var envValue = Environment.GetEnvironmentVariable("LIGHTNING_TRACKER_SYNC_INITIAL_LOOKBACK_MINUTES");
+        if (!string.IsNullOrWhiteSpace(envValue) && int.TryParse(envValue, out var parsed) && parsed > 0)
+        {
+            return parsed;
+        }
+
+        return _configuration.GetValue("Sync:InitialLookbackMinutes", 180);
+    }
     /// <summary>
     /// Gets the GLM sync raw retention window in hours.
     /// </summary>
