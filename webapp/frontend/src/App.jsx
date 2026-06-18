@@ -24,10 +24,10 @@ import {
 } from './services/lightningService'
 
 
-const DEFAULT_RENDER_HOURS = 4
+const DEFAULT_RENDER_HOURS = 3
 const DEFAULT_RENDER_MODE = 2
 const DEFAULT_VIS_MODE = 'density'
-const EVENTS_REFRESH_INTERVAL_MS = 60_000
+const EVENTS_REFRESH_INTERVAL_MS = 300_000
 const THEME_STORAGE_KEY = 'lightning-tracker-theme'
 
 // Virtual taker for "all of South America" view
@@ -152,10 +152,12 @@ function App() {
   }, [takers])
 
   // ─── Events hook (new JSON API) ───
+  const eventQueryMode = useMemo(() => (mode === 3 || mode === 4 ? mode : 1), [mode])
+
   const { events, loading: eventsLoading, stats, lastFetchedAt } = useEvents({
     takerId,
     taker: selectedTaker,
-    mode,
+    mode: eventQueryMode,
     startLocal: normalizeDateTimeLocal(startLocal),
     endLocal: normalizeDateTimeLocal(endLocal),
     initialLoadHours,
@@ -375,7 +377,7 @@ function App() {
 
   function startAnimation() {
     if (!selectedTaker) return
-    const start = startLocal ? new Date(startLocal).getTime() : Date.now() - (initialLoadHours || 4) * 3600000
+    const start = startLocal ? new Date(startLocal).getTime() : Date.now() - (initialLoadHours || 3) * 3600000
     setPlaybackTime(start)
     setAnimating(true)
   }
@@ -488,7 +490,7 @@ function App() {
     if (!animating) return
     
     const intervalMin = markerInterval || 10
-    const startMs = startLocal ? new Date(startLocal).getTime() : Date.now() - (initialLoadHours || 4) * 3600000
+    const startMs = startLocal ? new Date(startLocal).getTime() : Date.now() - (initialLoadHours || 3) * 3600000
     const endMs = endLocal ? new Date(endLocal).getTime() : Date.now()
 
     const id = setInterval(() => {
@@ -694,3 +696,4 @@ function App() {
 }
 
 export default App
+
