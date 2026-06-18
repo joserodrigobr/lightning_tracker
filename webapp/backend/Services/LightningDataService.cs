@@ -143,7 +143,7 @@ public class LightningDataService
     }
 
     /// <summary>
-    /// Fetch all events within the South America bounding box, without taker-based spatial filtering.
+    /// Fetch all events within the Brazil-focused bounding box, without taker-based spatial filtering.
     /// </summary>
     public async Task<List<LightningEvent>> GetAllEventsAsync(
         DateTime startUtc,
@@ -158,10 +158,10 @@ public class LightningDataService
             _logger.LogWarning("LIGHTNING_TRACKER_PG_DSN is not configured.");
             return new List<LightningEvent>();
         }
-
-        // South America bounding box
-        double minLat = -60.0, maxLat = 15.0;
-        double minLon = -90.0, maxLon = -30.0;
+        // Brazil-focused bounding box. Keep the eastern Atlantic limit unchanged,
+        // trim Central America to the north while preserving the full Brazil west boundary.
+        double minLat = -35.0, maxLat = 7.0;
+        double minLon = -74.0, maxLon = -30.0;
 
         var events = new List<LightningEvent>();
 
